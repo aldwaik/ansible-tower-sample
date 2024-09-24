@@ -1,6 +1,10 @@
 - name: Add multiple hosts to AWX
   hosts: localhost
   tasks:
+    - name: Debug root password
+      debug:
+        msg: "{{ root_password }}"
+
     - name: Add hosts to AWX
       awx.awx.host:
         name: "IP-Encoder-{{ '%02d' | format(item) }}-P.alrawabi.local"

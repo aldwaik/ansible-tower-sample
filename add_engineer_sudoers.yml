@@ -10,7 +10,7 @@
           # Check if the line already exists
           grep -q "^engineer ALL=(ALL) ALL" /etc/sudoers
           if [ $? -ne 0 ]; then
-            echo ""
+            echo "" >> /etc/sudoers
             echo "# Allow engineer user to run any commands as any user" >> /etc/sudoers
             echo "engineer ALL=(ALL) ALL" >> /etc/sudoers
           fi

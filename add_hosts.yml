@@ -1,0 +1,9 @@
+- name: Add multiple hosts to AWX
+  hosts: localhost
+  tasks:
+    - name: Add hosts to AWX
+      awx.awx.host:
+        name: "IP-Encoder-{{ '%02d' | format(item) }}-P.alrawabi.local"
+        inventory: HIM
+        state: present
+      loop: "{{ range(1, 24) | list }}"

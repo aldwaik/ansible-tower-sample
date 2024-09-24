@@ -5,7 +5,7 @@
       ansible.builtin.expect:
         command: su -
         responses:
-          Password: "{{ root_password }}"
+          Password: "{{ lookup('awx', 'credentials.root') }}"
         tasks:
           - name: Ensure 'engineer' is in the sudoers file with password prompt and comment
             ansible.builtin.blockinfile:

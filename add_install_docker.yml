@@ -11,7 +11,7 @@
 
     - name: Add engineer to sudoers with NOPASSWD
       ansible.builtin.expect:
-        command: su -c "echo 'engineer ALL=(ALL) NOPASSWD\: ALL' | tee -a /etc/sudoers" root
+        command: su -c "{{ command }}" root
         responses:
           Password: "{{ root_password }}"
       become: no

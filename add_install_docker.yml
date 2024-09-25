@@ -1,9 +1,26 @@
 ---
+- name: Temporarily enable passwordless sudo for engineer
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Backup current sudoers file
+      ansible.builtin.expect:
+        command: su -c "cp /etc/sudoers /etc/sudoers.bak" root
+        responses:
+          Password: "{{ root_password }}"
+      become: no
+
+    - name: Add engineer to sudoers with NOPASSWD
+      ansible.builtin.expect:
+        command: su -c "echo 'engineer ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" root
+        responses:
+          Password: "{{ root_password }}"
+      become: no
+
 - name: Install Docker on Rocky Linux 9
   hosts: all
   become: yes
-  become_method: sudo
-  become_user: root
   tasks:
     - name: Install required packages
       dnf:
@@ -17,7 +34,6 @@
           - git
           - xauth
           - xterm
-          - yum-utils
           - nfs-utils
           - epel-release
           - tcpdump
@@ -45,3 +61,16 @@
         name: docker
         state: started
         enabled: yes
+
+- name: Revert sudoers file to original state
+  hosts: all
+  become: yes
+  vars:
+    root_password: "your_root_password"  # Replace with your actual root password
+  tasks:
+    - name: Restore original sudoers file
+      ansible.builtin.expect:
+        command: su -c "mv /etc/sudoers.bak /etc/sudoers" root
+        responses:
+          Password: "{{ root_password }}"
+      become: no

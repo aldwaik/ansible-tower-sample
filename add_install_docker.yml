@@ -1,4 +1,3 @@
----
 - name: Temporarily enable passwordless sudo for engineer
   hosts: all
   tasks:

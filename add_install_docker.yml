@@ -1,6 +1,5 @@
 - name: Temporarily enable passwordless sudo for engineer
   hosts: all
-  become: yes
   tasks:
     - name: Backup current sudoers file
       ansible.builtin.expect:

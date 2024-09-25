@@ -22,12 +22,14 @@
           - rsyslog
           - python3
         state: present
+      become: yes
 
     - name: Add Docker repository
       command: >
         dnf config-manager
         --add-repo
         https://download.docker.com/linux/centos/docker-ce.repo
+      become: yes
 
     - name: Install Docker packages
       dnf:
@@ -36,9 +38,11 @@
           - docker-ce-cli
           - containerd.io
         state: present
+      become: yes
 
     - name: Start and enable Docker service
       systemd:
         name: docker
         state: started
         enabled: yes
+      become: yes

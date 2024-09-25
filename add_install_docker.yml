@@ -7,14 +7,12 @@
         command: su -c "cp /etc/sudoers /etc/sudoers.bak" root
         responses:
           Password: "{{ root_password }}"
-      become: no
 
     - name: Add engineer to sudoers with NOPASSWD
       ansible.builtin.expect:
         command: su -c "{{ command }}" root
         responses:
           Password: "{{ root_password }}"
-      become: no
 
 - name: Install Docker on Rocky Linux 9
   hosts: all
@@ -69,4 +67,3 @@
         command: su -c "mv /etc/sudoers.bak /etc/sudoers" root
         responses:
           Password: "{{ root_password }}"
-      become: no

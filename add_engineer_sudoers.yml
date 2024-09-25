@@ -1,86 +1,38 @@
----
-- name: Temporarily enable passwordless sudo for engineer
+- name: Add user 'engineer' to sudoers using su with expect
   hosts: all
-  become: yes
-  vars_files:
-    - vault.yml
   tasks:
-    - name: Backup current sudoers file
-      command: cp /etc/sudoers /etc/sudoers.bak
-      become: no
-      vars:
-        ansible_become_pass: "{{ root_password }}"
-      command: >
-        su -c "cp /etc/sudoers /etc/sudoers.bak" root
+    - name: Check if the script already exists
+      ansible.builtin.stat:
+        path: /tmp/add_engineer_to_sudoers.sh
+      register: script_stat
 
-    - name: Add engineer to sudoers with NOPASSWD
-      lineinfile:
-        path: /etc/sudoers
-        state: present
-        regexp: '^engineer'
-        line: 'engineer ALL=(ALL) NOPASSWD: ALL'
-        validate: 'visudo -cf %s'
-      become: no
-      vars:
-        ansible_become_pass: "{{ root_password }}"
-      command: >
-        su -c "echo 'engineer ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" root
+    - name: Create the script to add engineer to sudoers if it does not exist
+      ansible.builtin.copy:
+        dest: /tmp/add_engineer_to_sudoers.sh
+        content: |
+          #!/bin/bash
 
-- name: Install Docker on Rocky Linux 9
-  hosts: all
-  become: yes
-  tasks:
-    - name: Install required packages
-      dnf:
-        name:
-          - dnf-utils
-          - net-tools
-          - zip
-          - unzip
-          - ftp
-          - wget
-          - git
-          - xauth
-          - xterm
-          - yum-utils
-          - nfs-utils
-          - epel-release
-          - tcpdump
-          - chrony
-          - rsyslog
-          - python3
-        state: present
+          # Check if the line already exists
+          grep -q "^engineer ALL=(ALL) ALL" /etc/sudoers
+          if [ $? -ne 0 ]; then
+            echo "" >> /etc/sudoers
+            echo "# Allow engineer user to run any commands as any user" >> /etc/sudoers
+            echo "engineer ALL=(ALL) ALL" >> /etc/sudoers
+          fi
+        mode: '0755'
+      when: not script_stat.stat.exists
 
-    - name: Add Docker repository
-      command: >
-        dnf config-manager
-        --add-repo
-        https://download.docker.com/linux/centos/docker-ce.repo
+    - name: Check if engineer is already in sudoers
+      ansible.builtin.expect:
+        command: su -c "grep -q '^engineer ALL=(ALL) ALL' /etc/sudoers"
+        responses:
+          Password: "{{ root_password }}"
+      register: sudoers_check
+      ignore_errors: true
 
-    - name: Install Docker packages
-      dnf:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-        state: present
-
-    - name: Start and enable Docker service
-      systemd:
-        name: docker
-        state: started
-        enabled: yes
-
-- name: Revert sudoers file to original state
-  hosts: all
-  become: yes
-  vars_files:
-    - vault.yml
-  tasks:
-    - name: Restore original sudoers file
-      command: mv /etc/sudoers.bak /etc/sudoers
-      become: no
-      vars:
-        ansible_become_pass: "{{ root_password }}"
-      command: >
-        su -c "mv /etc/sudoers.bak /etc/sudoers" root
+    - name: Switch to root and run the script if engineer is not in sudoers
+      ansible.builtin.expect:
+        command: su -c "/tmp/add_engineer_to_sudoers.sh"
+        responses:
+          Password: "{{ root_password }}"
+      when: sudoers_check.rc != 0

@@ -17,6 +17,7 @@
           - git
           - xauth
           - xterm
+          - yum-utils
           - nfs-utils
           - epel-release
           - tcpdump

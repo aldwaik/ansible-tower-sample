@@ -1,9 +1,34 @@
 ---
+- name: Temporarily enable passwordless sudo for engineer
+  hosts: all
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Backup current sudoers file
+      command: cp /etc/sudoers /etc/sudoers.bak
+      become: no
+      vars:
+        ansible_become_pass: "{{ root_password }}"
+      command: >
+        su -c "cp /etc/sudoers /etc/sudoers.bak" root
+
+    - name: Add engineer to sudoers with NOPASSWD
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^engineer'
+        line: 'engineer ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+      become: no
+      vars:
+        ansible_become_pass: "{{ root_password }}"
+      command: >
+        su -c "echo 'engineer ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" root
+
 - name: Install Docker on Rocky Linux 9
   hosts: all
   become: yes
-  become_method: sudo
-  become_user: engineer
   tasks:
     - name: Install required packages
       dnf:
@@ -17,6 +42,7 @@
           - git
           - xauth
           - xterm
+          - yum-utils
           - nfs-utils
           - epel-release
           - tcpdump
@@ -44,3 +70,17 @@
         name: docker
         state: started
         enabled: yes
+
+- name: Revert sudoers file to original state
+  hosts: all
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Restore original sudoers file
+      command: mv /etc/sudoers.bak /etc/sudoers
+      become: no
+      vars:
+        ansible_become_pass: "{{ root_password }}"
+      command: >
+        su -c "mv /etc/sudoers.bak /etc/sudoers" root

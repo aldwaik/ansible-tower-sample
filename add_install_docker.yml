@@ -1,8 +1,6 @@
 ---
 - name: Temporarily enable passwordless sudo for engineer
   hosts: all
-  become: yes
-
   tasks:
     - name: Backup current sudoers file
       ansible.builtin.expect:
@@ -65,8 +63,6 @@
 - name: Revert sudoers file to original state
   hosts: all
   become: yes
-  vars:
-    root_password: "your_root_password"  # Replace with your actual root password
   tasks:
     - name: Restore original sudoers file
       ansible.builtin.expect:

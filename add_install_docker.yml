@@ -4,12 +4,12 @@
   tasks:
     - name: Backup current sudoers file
       ansible.builtin.expect:
-        command: su -c "cp /etc/sudoers /etc/sudoers.bak" root
+        command: su -c "cp /etc/sudoers /etc/sudoers.bak"
         responses:
           Password: "{{ root_password }}"
 
     - name: Add engineer to sudoers with NOPASSWD
       ansible.builtin.expect:
-        command: su -c "{{ command }}" root
+        command: su -c "{{ command }}"
         responses:
           Password: "{{ root_password }}"

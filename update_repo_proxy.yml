@@ -10,7 +10,7 @@
         state: absent
         backrefs: yes
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Uncomment lines starting with "#baseurl" in "epel.repo"
       replace:
@@ -18,7 +18,7 @@
         regexp: '^#baseurl'
         replace: 'baseurl'
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Replace URL in baseurl in "epel.repo"
       replace:
@@ -26,7 +26,7 @@
         regexp: 'https://download.example/pub/'
         replace: 'http://mirror.fcix.net.proxy.alrawabi.local/'
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Comment lines starting with "metalink" in "rocky.repo"
       lineinfile:
@@ -35,7 +35,7 @@
         state: absent
         backrefs: yes
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Uncomment lines starting with "#baseurl" in "rocky.repo"
       replace:
@@ -43,7 +43,7 @@
         regexp: '^#baseurl'
         replace: 'baseurl'
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Replace URL in baseurl in "rocky.repo"
       replace:
@@ -51,7 +51,7 @@
         regexp: 'http://dl.rockylinux.org/'
         replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Comment lines starting with "metalink" in "rocky-extras.repo"
       lineinfile:
@@ -60,7 +60,7 @@
         state: absent
         backrefs: yes
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Uncomment lines starting with "#baseurl" in "rocky-extras.repo"
       replace:
@@ -68,7 +68,7 @@
         regexp: '^#baseurl'
         replace: 'baseurl'
       notify:
-        - restart yum
+        - restart dnf
 
     - name: Replace URL in baseurl in "rocky-extras.repo"
       replace:
@@ -76,10 +76,10 @@
         regexp: 'http://dl.rockylinux.org/'
         replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
       notify:
-        - restart yum
+        - restart dnf
 
   handlers:
-    - name: restart yum
+    - name: restart dnf
       service:
-        name: yum
+        name: dnf
         state: restarted

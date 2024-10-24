@@ -3,7 +3,7 @@
   become: yes
   tasks:
 
-    - name: Comment lines starting with "metalink" in epel.repo
+    - name: Comment lines starting with "metalink" in "epel.repo"
       lineinfile:
         path: /etc/yum.repos.d/epel.repo
         regexp: '^metalink'
@@ -12,7 +12,7 @@
       notify:
         - restart yum
 
-    - name: Uncomment lines starting with "#baseurl" in epel.repo
+    - name: Uncomment lines starting with "#baseurl" in "epel.repo"
       replace:
         path: /etc/yum.repos.d/epel.repo
         regexp: '^#baseurl'
@@ -20,11 +20,61 @@
       notify:
         - restart yum
 
-    - name: Replace URL in baseurl
+    - name: Replace URL in baseurl in "epel.repo"
       replace:
         path: /etc/yum.repos.d/epel.repo
         regexp: 'https://download.example/pub/'
         replace: 'http://mirror.fcix.net.proxy.alrawabi.local/'
+      notify:
+        - restart yum
+
+    - name: Comment lines starting with "metalink" in "rocky.repo"
+      lineinfile:
+        path: /etc/yum.repos.d/rocky.repo
+        regexp: '^metalink'
+        state: absent
+        backrefs: yes
+      notify:
+        - restart yum
+
+    - name: Uncomment lines starting with "#baseurl" in "rocky.repo"
+      replace:
+        path: /etc/yum.repos.d/rocky.repo
+        regexp: '^#baseurl'
+        replace: 'baseurl'
+      notify:
+        - restart yum
+
+    - name: Replace URL in baseurl in "rocky.repo"
+      replace:
+        path: /etc/yum.repos.d/rocky.repo
+        regexp: 'http://dl.rockylinux.org/'
+        replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
+      notify:
+        - restart yum
+
+    - name: Comment lines starting with "metalink" in "rocky-extras.repo"
+      lineinfile:
+        path: /etc/yum.repos.d/rocky-extras.repo
+        regexp: '^metalink'
+        state: absent
+        backrefs: yes
+      notify:
+        - restart yum
+
+    - name: Uncomment lines starting with "#baseurl" in "rocky-extras.repo"
+      replace:
+        path: /etc/yum.repos.d/rocky-extras.repo
+        regexp: '^#baseurl'
+        replace: 'baseurl'
+      notify:
+        - restart yum
+
+    - name: Replace URL in baseurl in "rocky-extras.repo"
+      replace:
+        path: /etc/yum.repos.d/rocky-extras.repo
+        regexp: 'http://dl.rockylinux.org/'
+        replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
       notify:
         - restart yum
 

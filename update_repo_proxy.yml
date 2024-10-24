@@ -1,24 +1,34 @@
 - name: Make sure required packages are installed
   hosts: all
   become: yes
+  vars:
+    repo_files:
+      - /etc/yum.repos.d/epel.repo
+      - /etc/yum.repos.d/rocky.repo
+      - /etc/yum.repos.d/rocky-extras.repo
+      - /etc/yum.repos.d/rocky-addons.repo
+    rocky_repo_files:
+      - /etc/yum.repos.d/rocky.repo
+      - /etc/yum.repos.d/rocky-extras.repo
+      - /etc/yum.repos.d/rocky-addons.repo
   tasks:
 
-    - name: Comment lines starting with "metalink" in "epel.repo"
-      lineinfile:
-        path: /etc/yum.repos.d/epel.repo
-        regexp: '^metalink'
-        state: absent
-        backrefs: yes
-      notify:
-        - restart dnf
+    # - name: Comment lines starting with "metalink" in "epel.repo"
+    #   lineinfile:
+    #     path: /etc/yum.repos.d/epel.repo
+    #     regexp: '^metalink'
+    #     state: absent
+    #     backrefs: yes
+    #   notify:
+    #     - restart dnf
 
-    - name: Uncomment lines starting with "#baseurl" in "epel.repo"
-      replace:
-        path: /etc/yum.repos.d/epel.repo
-        regexp: '^#baseurl'
-        replace: 'baseurl'
-      notify:
-        - restart dnf
+    # - name: Uncomment lines starting with "#baseurl" in "epel.repo"
+    #   replace:
+    #     path: /etc/yum.repos.d/epel.repo
+    #     regexp: '^#baseurl'
+    #     replace: 'baseurl'
+    #   notify:
+    #     - restart dnf
 
     - name: Replace URL in baseurl in "epel.repo"
       replace:
@@ -28,55 +38,84 @@
       notify:
         - restart dnf
 
-    - name: Comment lines starting with "metalink" in "rocky.repo"
+
+    - name: Comment lines starting with "metalink" in repo files
       lineinfile:
-        path: /etc/yum.repos.d/rocky.repo
+        path: "{{ item }}"
         regexp: '^metalink'
         state: absent
         backrefs: yes
+      with_items: "{{ repo_files }}"
       notify:
         - restart dnf
 
-    - name: Uncomment lines starting with "#baseurl" in "rocky.repo"
+    - name: Uncomment lines starting with "#baseurl" in repo files
       replace:
-        path: /etc/yum.repos.d/rocky.repo
+        path: "{{ item }}"
         regexp: '^#baseurl'
         replace: 'baseurl'
+      with_items: "{{ repo_files }}"
       notify:
         - restart dnf
 
-    - name: Replace URL in baseurl in "rocky.repo"
+    - name: Replace URL in baseurl in rocky repo files
       replace:
-        path: /etc/yum.repos.d/rocky.repo
+        path: "{{ item }}"
         regexp: 'http://dl.rockylinux.org/'
         replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
+      with_items: "{{ rocky_repo_files }}"
       notify:
         - restart dnf
 
-    - name: Comment lines starting with "metalink" in "rocky-extras.repo"
-      lineinfile:
-        path: /etc/yum.repos.d/rocky-extras.repo
-        regexp: '^metalink'
-        state: absent
-        backrefs: yes
-      notify:
-        - restart dnf
+    # - name: Comment lines starting with "metalink" in "rocky.repo"
+    #   lineinfile:
+    #     path: /etc/yum.repos.d/rocky.repo
+    #     regexp: '^metalink'
+    #     state: absent
+    #     backrefs: yes
+    #   notify:
+    #     - restart dnf
 
-    - name: Uncomment lines starting with "#baseurl" in "rocky-extras.repo"
-      replace:
-        path: /etc/yum.repos.d/rocky-extras.repo
-        regexp: '^#baseurl'
-        replace: 'baseurl'
-      notify:
-        - restart dnf
+    # - name: Uncomment lines starting with "#baseurl" in "rocky.repo"
+    #   replace:
+    #     path: /etc/yum.repos.d/rocky.repo
+    #     regexp: '^#baseurl'
+    #     replace: 'baseurl'
+    #   notify:
+    #     - restart dnf
 
-    - name: Replace URL in baseurl in "rocky-extras.repo"
-      replace:
-        path: /etc/yum.repos.d/rocky-extras.repo
-        regexp: 'http://dl.rockylinux.org/'
-        replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
-      notify:
-        - restart dnf
+    # - name: Replace URL in baseurl in "rocky.repo"
+    #   replace:
+    #     path: /etc/yum.repos.d/rocky.repo
+    #     regexp: 'http://dl.rockylinux.org/'
+    #     replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
+    #   notify:
+    #     - restart dnf
+
+    # - name: Comment lines starting with "metalink" in "rocky-extras.repo"
+    #   lineinfile:
+    #     path: /etc/yum.repos.d/rocky-extras.repo
+    #     regexp: '^metalink'
+    #     state: absent
+    #     backrefs: yes
+    #   notify:
+    #     - restart dnf
+
+    # - name: Uncomment lines starting with "#baseurl" in "rocky-extras.repo"
+    #   replace:
+    #     path: /etc/yum.repos.d/rocky-extras.repo
+    #     regexp: '^#baseurl'
+    #     replace: 'baseurl'
+    #   notify:
+    #     - restart dnf
+
+    # - name: Replace URL in baseurl in "rocky-extras.repo"
+    #   replace:
+    #     path: /etc/yum.repos.d/rocky-extras.repo
+    #     regexp: 'http://dl.rockylinux.org/'
+    #     replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
+    #   notify:
+    #     - restart dnf
 
   handlers:
     - name: restart dnf

@@ -1,5 +1,6 @@
 - name: Make sure required packages are installed
   hosts: all
+  become: yes
   tasks:
 
     - name: Comment lines starting with "metalink" in epel.repo

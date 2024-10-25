@@ -1,0 +1,14 @@
+- name: Make sure required packages are installed
+  hosts: all
+  become: yes
+  tasks:
+  - name: Update all packages
+    ansible.builtin.dnf:
+      name: '*'
+      state: latest
+
+  - name: Upgrade all packages
+    ansible.builtin.dnf:
+      name: '*'
+      state: latest
+      update_cache: yes

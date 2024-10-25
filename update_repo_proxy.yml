@@ -13,23 +13,6 @@
       - /etc/yum.repos.d/rocky-addons.repo
   tasks:
 
-    # - name: Comment lines starting with "metalink" in "epel.repo"
-    #   lineinfile:
-    #     path: /etc/yum.repos.d/epel.repo
-    #     regexp: '^metalink'
-    #     state: absent
-    #     backrefs: yes
-    #   notify:
-    #     - restart dnf
-
-    # - name: Uncomment lines starting with "#baseurl" in "epel.repo"
-    #   replace:
-    #     path: /etc/yum.repos.d/epel.repo
-    #     regexp: '^#baseurl'
-    #     replace: 'baseurl'
-    #   notify:
-    #     - restart dnf
-
     - name: Comment lines starting with "metalink" in repo files
       lineinfile:
         path: "{{ item }}"

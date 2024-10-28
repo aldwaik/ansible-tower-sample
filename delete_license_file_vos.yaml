@@ -2,18 +2,19 @@
   hosts: all
   become: yes
   tasks:
-    - name: Install expect package
-      ansible.builtin.package:
-        name: expect
-        state: present
+    - name: Create the script on the remote server
+      shell: |
+        cat << 'EOF' > /tmp/run_in_container.sh
+        expect <<EOF
+        spawn vosctl sh
+        expect "*# "
+        send "rm -f /var/lib/persistent/licensing/new_iso_install\r"
+        expect "*# "
+        send "exit\r"
+        expect eof
+        EOF
+        EOF
+      mode: '0755'
 
-    - name: Run vosctl sh and execute command inside the container
-      expect:
-        command: vosctl sh
-        responses:
-          '.*root@vosflex.*': "rm -f /var/lib/persistent/licensing/new_iso_install\n"
-      register: result
-
-    - name: Display output
-      debug:
-        msg: "{{ result.stdout }}"
+    - name: Execute the script on the remote server
+      shell: /tmp/run_in_container.sh

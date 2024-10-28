@@ -2,19 +2,21 @@
   hosts: all
   become: yes
   tasks:
-  - name: Create the script on the remote server
-    shell: |
-      cat << 'EOF' > /tmp/run_in_container.sh
-      expect <<EOF
-      spawn vosctl sh
-      expect "*# "
-      send "rm -f /var/lib/persistent/licensing/new_iso_install\r"
-      expect "*# "
-      send "exit\r"
-      expect eof
-      EOF
-      EOF
-    mode: '0755'
+    - name: Create the script on the remote server
+      ansible.builtin.copy:
+        dest: /tmp/run_in_container.sh
+        content: |
+          #!/bin/bash
+          expect <<EOF
+          spawn vosctl sh
+          expect "*# "
+          send "rm -f /var/lib/persistent/licensing/new_iso_install\r"
+          expect "*# "
+          send "exit\r"
+          expect eof
+          EOF
+        mode: '0755'
+      when: not script_stat.stat.exists
 
-  - name: Execute the script on the remote server
-    shell: /tmp/run_in_container.sh
+    - name: Execute the script on the remote server
+      shell: /tmp/run_in_container.sh

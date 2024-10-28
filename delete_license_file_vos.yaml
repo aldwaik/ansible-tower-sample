@@ -2,6 +2,11 @@
   hosts: all
   become: yes
   tasks:
+    - name: Check if the script already exists
+      ansible.builtin.stat:
+        path: /tmp/add_engineer_to_sudoers.sh
+      register: script_stat
+      
     - name: Create the script on the remote server
       ansible.builtin.copy:
         dest: /tmp/run_in_container.sh

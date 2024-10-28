@@ -1,0 +1,19 @@
+- name: Make sure required packages are installed
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install expect package
+      ansible.builtin.package:
+        name: expect
+        state: present
+
+    - name: Run vosctl sh and execute command inside the container
+      expect:
+        command: vosctl sh
+        responses:
+          '.*# $': 'your_command_here\n'
+      register: result
+
+    - name: Display output
+      debug:
+        msg: "{{ result.stdout }}"

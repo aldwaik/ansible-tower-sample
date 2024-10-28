@@ -11,7 +11,7 @@
       expect:
         command: vosctl sh
         responses:
-          '.*# $': 'your_command_here\n'
+          '.*# $': 'rm -f /var/lib/persistent/licensing/new_iso_install\n'
       register: result
 
     - name: Display output

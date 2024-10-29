@@ -100,7 +100,7 @@
     - name: Fail if any network variable is empty
       fail:
         msg: "One or more network variables are empty. Please check the network configuration."
-      when: ip_addr == '' or gw == '' or dns == '' or domain == '' or searches == ''
+      when: ip_addr == '' or gw == '' or dns == '' or domain == ''
 
     - name: Restart NetworkManager service
       systemd:

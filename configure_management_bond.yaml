@@ -78,11 +78,12 @@
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
-        gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
-        dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
-        domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
-        searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
-        echo -e "IP_ADDR=$ip_addr\nGW=$gw\nDNS=$dns\nDOMAIN=$domain\nSEARCHES=$searches"
+        # gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
+        # dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
+        # domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
+        # searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
+        # echo -e "IP_ADDR=$ip_addr\nGW=$gw\nDNS=$dns\nDOMAIN=$domain\nSEARCHES=$searches"
+        echo -e "IP_ADDR=$ip_addr"
       register: network_info
 
     - name: Debug network info output
@@ -92,10 +93,9 @@
     - name: Set variables from the network info
       set_fact:
         ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
-        gw: "{{ network_info.stdout_lines[1].split('=')[1] | default('10.17.11.254') }}"
-        dns: "{{ network_info.stdout_lines[2].split('=')[1] | default('10.17.11.240') }}"
-        domain: "{{ network_info.stdout_lines[3].split('=')[1] | default('alrawabi.local') }}"
-        searches: "{{ network_info.stdout_lines[4].split('=')[1] | default('alrawabi.local') }}"
+        gw: "10.17.11.254"
+        dns: "10.17.11.240"
+        domain: "alrawabi.local"
 
     - name: Fail if any network variable is empty
       fail:
@@ -131,7 +131,7 @@
         nmcli con mod bond-mgmt ipv4.gateway "{{ gw }}"
         nmcli con mod bond-mgmt ipv4.dns "{{ dns }}"
         nmcli con mod bond-mgmt ipv4.dns-search "{{ domain }}"
-        nmcli con mod bond-mgmt ipv4.dns-search "{{ searches }}"
+        nmcli con mod bond-mgmt ipv4.dns-search "{{ domain }}"
         nmcli con mod bond-mgmt ipv4.method manual
         nmcli con mod bond-mgmt connection.autoconnect yes
         nmcli con mod bond-mgmt ipv6.method disabled

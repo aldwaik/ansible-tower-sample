@@ -97,6 +97,11 @@
         domain: "{{ network_info.stdout_lines[3].split('=')[1] | default('') }}"
         searches: "{{ network_info.stdout_lines[4].split('=')[1] | default('') }}"
 
+    - name: Fail if any network variable is empty
+          fail:
+            msg: "One or more network variables are empty. Please check the network configuration."
+          when: ip_addr == '' or gw == '' or dns == '' or domain == '' or searches == ''
+
     - name: Restart NetworkManager service
       systemd:
         name: NetworkManager
@@ -111,10 +116,16 @@
     - name: Create bond-mgmt and configure it if not exists
       shell: |
         nmcli con del "Wired connection 1"
-        nmcli con mod eno8303 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
         nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup
         nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-1 ifname eno8303 master bond-mgmt
         nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-2 ifname eno12399 master bond-mgmt
+      when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout == ""
+      args:
+        executable: /bin/bash
+
+    - name: Configure it if not exists
+      shell: |
+        nmcli con mod eno8303 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
         nmcli con mod bond-mgmt bond.options "primary=eno8303,mode=active-backup,miimon=100,updelay=100"
         nmcli con mod bond-mgmt ipv4.addresses "{{ ip_addr }}"
         nmcli con mod bond-mgmt ipv4.gateway "{{ gw }}"
@@ -125,7 +136,6 @@
         nmcli con mod bond-mgmt connection.autoconnect yes
         nmcli con mod bond-mgmt ipv6.method disabled
         nmcli con up bond-mgmt
-      when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout == ""
       args:
         executable: /bin/bash
 

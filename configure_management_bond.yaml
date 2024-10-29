@@ -105,8 +105,8 @@
     - name: Check if bond-mgmt exists
       shell: |
         nmcli dev status | grep bond-mgmt
-      register: bond-mgmt_check
-      failed_when: bond-mgmt_check.rc != 0 and bond-mgmt_check.stdout != ""
+      register: bond_mgmt_check
+      failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
 
     - name: Create bond-mgmt and configure it if not exists
       shell: |
@@ -124,7 +124,7 @@
         nmcli con mod bond-mgmt connection.autoconnect yes
         nmcli con mod bond-mgmt ipv6.method disabled
         nmcli con up bond-mgmt
-      when: bond-mgmt_check.rc != 0 and bond-mgmt_check.stdout == ""
+      when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout == ""
       args:
         executable: /bin/bash
 

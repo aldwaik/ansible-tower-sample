@@ -105,3 +105,10 @@
       when: bond0_check.rc != 0 and bond0_check.stdout == ""
       args:
         executable: /bin/bash
+
+    - name: Ensure monitoring and link up delay set to 100 ms
+      shell: |
+        echo "BONDING_OPTS=\"mode=1 primary=eno8303 miimon=100 updelay=100\"" >> /etc/sysconfig/network-scripts/ifcfg-bond0
+        systemctl restart NetworkManager
+      args:
+        executable: /bin/bash

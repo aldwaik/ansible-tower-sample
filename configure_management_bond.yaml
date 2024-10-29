@@ -104,4 +104,4 @@
         nmcli con up bond0
       when: bond0_check.rc != 0 and bond0_check.stdout == ""
       args:
-        executable
+        executable: /bin/bash

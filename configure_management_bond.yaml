@@ -72,7 +72,7 @@
         dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
         domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
         searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
-        echo "IP_ADDR=$ip_addr GW=$gw DNS=$dns DOMAIN=$domain SEARCHES=$searches"
+        echo -e "IP_ADDR=$ip_addr\nGW=$gw\nDNS=$dns\nDOMAIN=$domain\nSEARCHES=$searches"
       register: network_info
 
     - name: Debug network info output

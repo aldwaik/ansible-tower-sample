@@ -5,11 +5,21 @@
   vars:
     interface: "{{ 'eth0' if eth0_nmconnection.stat.exists else 'eno8303' }}"
   tasks:
-    - name: Set the hostname from DHCP
+    - name: Check current hostname
+      command: hostname
+      register: current_hostname
+
+    - name: Check hostname in file
+      command: cat /etc/hostname
+      register: file_hostname
+      failed_when: false
+
+    - name: Set the hostname from DHCP if different
       shell: |
         hostnamectl set-hostname $(hostname)
       args:
         executable: /bin/bash
+      when: current_hostname.stdout != file_hostname.stdout
 
     - name: Check if eth0.nmconnection exists
       stat:
@@ -20,12 +30,16 @@
       stat:
         path: /etc/NetworkManager/system-connections/eno8303.nmconnection
       register: eno8303_nmconnection
-      when: not eth0_nmconnection.stat.exists
 
-    - name: Rename eth0.nmconnection to eno8303.nmconnection if eth0.nmconnection exists
+    - name: Rename eth0.nmconnection to eno8303.nmconnection if eth0.nmconnection exists and eno8303.nmconnection does not exist
       shell: |
         mv /etc/NetworkManager/system-connections/eth0.nmconnection /etc/NetworkManager/system-connections/eno8303.nmconnection
-      when: eth0_nmconnection.stat.exists
+      when: eth0_nmconnection.stat.exists and not eno8303_nmconnection.stat.exists
+
+    - name: Fail if both eth0.nmconnection and eno8303.nmconnection exist
+      fail:
+        msg: "Both eth0.nmconnection and eno8303.nmconnection exist. Manual intervention required."
+      when: eth0_nmconnection.stat.exists and eno8303_nmconnection.stat.exists
 
     - name: Re-register if eno8303.nmconnection exists after renaming
       stat:
@@ -61,13 +75,17 @@
         echo "IP_ADDR=$ip_addr GW=$gw DNS=$dns DOMAIN=$domain SEARCHES=$searches"
       register: network_info
 
+    - name: Debug network info output
+      debug:
+        var: network_info.stdout_lines
+
     - name: Set variables from the network info
       set_fact:
-        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] }}"
-        gw: "{{ network_info.stdout_lines[1].split('=')[1] }}"
-        dns: "{{ network_info.stdout_lines[2].split('=')[1] }}"
-        domain: "{{ network_info.stdout_lines[3].split('=')[1] }}"
-        searches: "{{ network_info.stdout_lines[4].split('=')[1] }}"
+        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
+        gw: "{{ network_info.stdout_lines[1].split('=')[1] | default('') }}"
+        dns: "{{ network_info.stdout_lines[2].split('=')[1] | default('') }}"
+        domain: "{{ network_info.stdout_lines[3].split('=')[1] | default('') }}"
+        searches: "{{ network_info.stdout_lines[4].split('=')[1] | default('') }}"
 
     - name: Get the NTP server configured via DHCP and statically configure it
       shell: |

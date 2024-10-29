@@ -1,6 +1,6 @@
 ---
 - name: Configure XOS Management bond
-  hosts: rocky9_servers
+  hosts: all
   become: yes
   vars:
     interface: "{{ 'eth0' if eth0_nmconnection.stat.exists else 'eno8303' }}"

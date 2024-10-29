@@ -1,0 +1,115 @@
+---
+- name: Configure XOS Management bond
+  hosts: rocky9_servers
+  become: yes
+  vars:
+    interface: "{{ 'eth0' if eth0_nmconnection.stat.exists else 'eno8303' }}"
+  tasks:
+    - name: Set the hostname from DHCP
+      shell: |
+        hostnamectl set-hostname $(hostname)
+      args:
+        executable: /bin/bash
+
+    - name: Check if eth0.nmconnection exists
+      stat:
+        path: /etc/NetworkManager/system-connections/eth0.nmconnection
+      register: eth0_nmconnection
+
+    - name: Check if eno8303.nmconnection exists
+      stat:
+        path: /etc/NetworkManager/system-connections/eno8303.nmconnection
+      register: eno8303_nmconnection
+      when: not eth0_nmconnection.stat.exists
+
+    - name: Rename eth0.nmconnection to eno8303.nmconnection if eth0.nmconnection exists
+      shell: |
+        mv /etc/NetworkManager/system-connections/eth0.nmconnection /etc/NetworkManager/system-connections/eno8303.nmconnection
+      when: eth0_nmconnection.stat.exists
+
+    - name: Re-check if eno8303.nmconnection exists after renaming
+      stat:
+        path: /etc/NetworkManager/system-connections/eno8303.nmconnection
+      register: eno8303_nmconnection_after_rename
+      when: eth0_nmconnection.stat.exists
+
+    - name: Ensure eno8303.nmconnection config is correct
+      block:
+        - name: Set ID and interface-name to eno8303
+          lineinfile:
+            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
+            regexp: '^(id|interface-name)=.*'
+            line: '\1=eno8303'
+            backrefs: yes
+        - name: Replace any occurrence of eth0 with eno8303 inside eno8303.nmconnection
+          replace:
+            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
+            regexp: 'eth0'
+            replace: 'eno8303'
+      when: eno8303_nmconnection.stat.exists or eno8303_nmconnection_after_rename.stat.exists
+
+    - name: Set the interface variable
+      set_fact:
+        interface: "{{ 'eth0' if eth0_nmconnection.stat.exists else 'eno8303' }}"
+
+    - name: Get the IP, Gateway, DNS, Domain, and Searches
+      shell: |
+        ip_addr=$(nmcli -t -f IP4.ADDRESS dev show {{ interface }} | cut -d: -f2)
+        gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
+        dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
+        domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
+        searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
+        echo "IP_ADDR=$ip_addr GW=$gw DNS=$dns DOMAIN=$domain SEARCHES=$searches"
+      register: network_info
+
+    - name: Set variables from the network info
+      set_fact:
+        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] }}"
+        gw: "{{ network_info.stdout_lines[1].split('=')[1] }}"
+        dns: "{{ network_info.stdout_lines[2].split('=')[1] }}"
+        domain: "{{ network_info.stdout_lines[3].split('=')[1] }}"
+        searches: "{{ network_info.stdout_lines[4].split('=')[1] }}"
+
+    - name: Get the NTP server configured via DHCP and statically configure it
+      shell: |
+        ntp_server=$(nmcli dev show {{ interface }} | grep IP4.DHCP.NTP | awk '{print $2}')
+        echo "server $ntp_server" >> /etc/chrony.conf
+        systemctl restart chronyd
+      args:
+        executable: /bin/bash
+
+    - name: Restart NetworkManager service
+      systemd:
+        name: NetworkManager
+        state: restarted
+
+    - name: Check if bond0 exists
+      shell: |
+        nmcli dev status | grep bond0
+      register: bond0_check
+      failed_when: bond0_check.rc != 0 and bond0_check.stdout != ""
+
+    - name: Create bond0 and configure it if not exists
+      shell: |
+        nmcli con add type bond ifname bond0 mode active-backup primary eno8303
+        nmcli con add type ethernet slave-type bond con-name eno8303 ifname eno8303 master bond0
+        nmcli con add type ethernet slave-type bond con-name eno12399 ifname eno12399 master bond0
+        nmcli con mod bond0 ipv4.addresses "{{ ip_addr }}"
+        nmcli con mod bond0 ipv4.gateway "{{ gw }}"
+        nmcli con mod bond0 ipv4.dns "{{ dns }}"
+        nmcli con mod bond0 ipv4.dns-search "{{ domain }}"
+        nmcli con mod bond0 ipv4.dns-search "{{ searches }}"
+        nmcli con mod bond0 ipv4.method manual
+        nmcli con mod bond0 connection.autoconnect yes
+        nmcli con mod bond0 ipv6.method disabled
+        nmcli con up bond0
+      when: bond0_check.rc != 0 and bond0_check.stdout == ""
+      args:
+        executable: /bin/bash
+
+    - name: Ensure monitoring and link up delay set to 100 ms
+      shell: |
+        echo "BONDING_OPTS=\"mode=1 primary=eno8303 miimon=100 updelay=100\"" >> /etc/sysconfig/network-scripts/ifcfg-bond0
+        systemctl restart NetworkManager
+      args:
+        executable: /bin/bash

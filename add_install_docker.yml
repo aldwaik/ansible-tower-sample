@@ -50,3 +50,9 @@
         name: docker
         state: started
         enabled: yes
+    
+    - name: Enable and start cockpit.socket
+      ansible.builtin.systemd:
+        name: cockpit.socket
+        enabled: yes
+        state: started

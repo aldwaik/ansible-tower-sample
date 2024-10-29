@@ -87,14 +87,6 @@
         domain: "{{ network_info.stdout_lines[3].split('=')[1] | default('') }}"
         searches: "{{ network_info.stdout_lines[4].split('=')[1] | default('') }}"
 
-    - name: Get the NTP server configured via DHCP and statically configure it
-      shell: |
-        ntp_server=$(nmcli dev show {{ interface }} | grep IP4.DHCP.NTP | awk '{print $2}')
-        echo "server $ntp_server" >> /etc/chrony.conf
-        systemctl restart chronyd
-      args:
-        executable: /bin/bash
-
     - name: Restart NetworkManager service
       systemd:
         name: NetworkManager

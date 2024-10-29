@@ -115,7 +115,7 @@
       register: bond_mgmt_check
       failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
 
-    - name: Create bond-mgmt and configure it if not exists
+    - name: Create bond-mgmt if not exists
       shell: |
         nmcli con del "Wired connection 1"
         nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup

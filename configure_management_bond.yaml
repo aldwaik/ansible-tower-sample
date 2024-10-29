@@ -93,8 +93,10 @@
     - name: Set variables from the network info
       set_fact:
         ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
-        gw: "10.17.11.254"
-        dns: "10.17.11.240"
+        gw: "{{ '10.17.11.254' if ip_addr.startswith('10.17.11') else '10.17.12.254' }}"
+        dns: "{{ '10.17.11.240' if ip_addr.startswith('10.17.11') else '10.17.12.240' }}"
+        # gw: "10.17.11.254"
+        # dns: "10.17.11.240"
         domain: "alrawabi.local"
 
     - name: Fail if any network variable is empty
@@ -123,7 +125,7 @@
       args:
         executable: /bin/bash
 
-    - name: Configure it if not exists
+    - name: Configure bond-mgmt
       shell: |
         nmcli con mod eno8303 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
         nmcli con mod bond-mgmt bond.options "primary=eno8303,mode=active-backup,miimon=100,updelay=100"

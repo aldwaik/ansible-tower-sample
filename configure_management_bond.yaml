@@ -59,6 +59,16 @@
             path: /etc/NetworkManager/system-connections/eno8303.nmconnection
             regexp: 'eth0'
             replace: 'eno8303'
+        - name: Remove org.freedesktop.NetworkManager.origin line
+          ansible.builtin.lineinfile:
+            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
+            regexp: '^org.freedesktop.NetworkManager.origin='
+            state: absent
+        - name: Remove [user] section header
+          ansible.builtin.lineinfile:
+            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
+            regexp: '^\[user\]'
+            state: absent
       when: eno8303_nmconnection.stat.exists
 
     - name: Set the interface variable
@@ -92,33 +102,35 @@
         name: NetworkManager
         state: restarted
 
-    - name: Check if bond0 exists
+    - name: Check if bond-mgmt exists
       shell: |
-        nmcli dev status | grep bond0
-      register: bond0_check
-      failed_when: bond0_check.rc != 0 and bond0_check.stdout != ""
+        nmcli dev status | grep bond-mgmt
+      register: bond-mgmt_check
+      failed_when: bond-mgmt_check.rc != 0 and bond-mgmt_check.stdout != ""
 
-    - name: Create bond0 and configure it if not exists
+    - name: Create bond-mgmt and configure it if not exists
       shell: |
-        nmcli con add type bond ifname bond0 mode active-backup primary eno8303
-        nmcli con add type ethernet slave-type bond con-name eno8303 ifname eno8303 master bond0
-        nmcli con add type ethernet slave-type bond con-name eno12399 ifname eno12399 master bond0
-        nmcli con mod bond0 ipv4.addresses "{{ ip_addr }}"
-        nmcli con mod bond0 ipv4.gateway "{{ gw }}"
-        nmcli con mod bond0 ipv4.dns "{{ dns }}"
-        nmcli con mod bond0 ipv4.dns-search "{{ domain }}"
-        nmcli con mod bond0 ipv4.dns-search "{{ searches }}"
-        nmcli con mod bond0 ipv4.method manual
-        nmcli con mod bond0 connection.autoconnect yes
-        nmcli con mod bond0 ipv6.method disabled
-        nmcli con up bond0
-      when: bond0_check.rc != 0 and bond0_check.stdout == ""
+        nmcli con del "Wired connection 1"
+        nmcli con mod eno8303 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
+        nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup
+        nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-1 ifname eno8303 master bond-mgmt
+        nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-2 ifname eno12399 master bond-mgmt
+        nmcli con mod bond-mgmt ipv4.addresses "{{ ip_addr }}"
+        nmcli con mod bond-mgmt ipv4.gateway "{{ gw }}"
+        nmcli con mod bond-mgmt ipv4.dns "{{ dns }}"
+        nmcli con mod bond-mgmt ipv4.dns-search "{{ domain }}"
+        nmcli con mod bond-mgmt ipv4.dns-search "{{ searches }}"
+        nmcli con mod bond-mgmt ipv4.method manual
+        nmcli con mod bond-mgmt connection.autoconnect yes
+        nmcli con mod bond-mgmt ipv6.method disabled
+        nmcli con up bond-mgmt
+      when: bond-mgmt_check.rc != 0 and bond-mgmt_check.stdout == ""
       args:
         executable: /bin/bash
 
     - name: Ensure monitoring and link up delay set to 100 ms
       shell: |
-        echo "BONDING_OPTS=\"mode=1 primary=eno8303 miimon=100 updelay=100\"" >> /etc/sysconfig/network-scripts/ifcfg-bond0
+        echo "BONDING_OPTS=\"mode=1 primary=eno8303 miimon=100 updelay=100\"" >> /etc/sysconfig/network-scripts/ifcfg-bond-mgmt
         systemctl restart NetworkManager
       args:
         executable: /bin/bash

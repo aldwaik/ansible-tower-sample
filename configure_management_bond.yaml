@@ -129,6 +129,11 @@
       args:
         executable: /bin/bash
 
+    - name: Restart NetworkManager service (second time)
+      systemd:
+        name: NetworkManager
+        state: restarted
+
     - name: Ensure monitoring and link up delay set to 100 ms
       shell: |
         echo "BONDING_OPTS=\"mode=1 primary=eno8303 miimon=100 updelay=100\"" >> /etc/sysconfig/network-scripts/ifcfg-bond-mgmt

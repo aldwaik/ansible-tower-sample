@@ -78,10 +78,10 @@
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
-        # gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
-        # dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
-        # domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
-        # searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
+        gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
+        dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
+        domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
+        searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
         # echo -e "IP_ADDR=$ip_addr\nGW=$gw\nDNS=$dns\nDOMAIN=$domain\nSEARCHES=$searches"
         echo -e "IP_ADDR=$ip_addr"
       register: network_info
@@ -93,8 +93,8 @@
     - name: Set variables from the network info
       set_fact:
         ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
-        gw: "{{ '10.17.11.254' if {{ ip_addr }}.startswith('10.17.11') else '10.17.12.254' }}"
-        dns: "{{ '10.17.11.240' if {{ ip_addr }}.startswith('10.17.11') else '10.17.12.240' }}"
+        gw: "{{ '10.17.11.254' if network_info.stdout_lines[0].split('=')[1].startswith('10.17.11') else '10.17.12.254' }}"
+        dns: "{{ '10.17.11.240' if network_info.stdout_lines[0].split('=')[1].startswith('10.17.11') else '10.17.12.240' }}"
         # gw: "10.17.11.254"
         # dns: "10.17.11.240"
         domain: "alrawabi.local"

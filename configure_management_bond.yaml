@@ -93,8 +93,8 @@
     - name: Set variables from the network info
       set_fact:
         ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
-        gw: "{{ '10.17.11.254' if ip_addr.startswith('10.17.11') else '10.17.12.254' }}"
-        dns: "{{ '10.17.11.240' if ip_addr.startswith('10.17.11') else '10.17.12.240' }}"
+        gw: "{{ '10.17.11.254' if {{ ip_addr }}.startswith('10.17.11') else '10.17.12.254' }}"
+        dns: "{{ '10.17.11.240' if {{ ip_addr }}.startswith('10.17.11') else '10.17.12.240' }}"
         # gw: "10.17.11.254"
         # dns: "10.17.11.240"
         domain: "alrawabi.local"

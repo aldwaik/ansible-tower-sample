@@ -27,11 +27,10 @@
         mv /etc/NetworkManager/system-connections/eth0.nmconnection /etc/NetworkManager/system-connections/eno8303.nmconnection
       when: eth0_nmconnection.stat.exists
 
-    - name: Re-check if eno8303.nmconnection exists after renaming
+    - name: Re-register if eno8303.nmconnection exists after renaming
       stat:
         path: /etc/NetworkManager/system-connections/eno8303.nmconnection
-      register: eno8303_nmconnection_after_rename
-      when: eth0_nmconnection.stat.exists
+      register: eno8303_nmconnection
 
     - name: Ensure eno8303.nmconnection config is correct
       block:
@@ -46,7 +45,7 @@
             path: /etc/NetworkManager/system-connections/eno8303.nmconnection
             regexp: 'eth0'
             replace: 'eno8303'
-      when: eno8303_nmconnection.stat.exists or eno8303_nmconnection_after_rename.stat.exists
+      when: eno8303_nmconnection.stat.exists
 
     - name: Set the interface variable
       set_fact:
@@ -105,11 +104,4 @@
         nmcli con up bond0
       when: bond0_check.rc != 0 and bond0_check.stdout == ""
       args:
-        executable: /bin/bash
-
-    - name: Ensure monitoring and link up delay set to 100 ms
-      shell: |
-        echo "BONDING_OPTS=\"mode=1 primary=eno8303 miimon=100 updelay=100\"" >> /etc/sysconfig/network-scripts/ifcfg-bond0
-        systemctl restart NetworkManager
-      args:
-        executable: /bin/bash
+        executable

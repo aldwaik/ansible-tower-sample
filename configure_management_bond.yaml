@@ -77,7 +77,7 @@
 
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |
-        ip_addr=$(nmcli -t -f IP4.ADDRESS dev show {{ interface }} | cut -d: -f2)
+        ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
         gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
         dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
         domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
@@ -92,10 +92,10 @@
     - name: Set variables from the network info
       set_fact:
         ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
-        gw: "{{ network_info.stdout_lines[1].split('=')[1] | default('') }}"
-        dns: "{{ network_info.stdout_lines[2].split('=')[1] | default('') }}"
-        domain: "{{ network_info.stdout_lines[3].split('=')[1] | default('') }}"
-        searches: "{{ network_info.stdout_lines[4].split('=')[1] | default('') }}"
+        gw: "{{ network_info.stdout_lines[1].split('=')[1] | default('10.17.11.254') }}"
+        dns: "{{ network_info.stdout_lines[2].split('=')[1] | default('10.17.11.240') }}"
+        domain: "{{ network_info.stdout_lines[3].split('=')[1] | default('alrawabi.local') }}"
+        searches: "{{ network_info.stdout_lines[4].split('=')[1] | default('alrawabi.local') }}"
 
     - name: Fail if any network variable is empty
       fail:

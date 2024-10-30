@@ -37,13 +37,13 @@
       when: result.results | selectattr('rc', 'ne', 0) | list | length > 0
 
     - name: Check IP configuration of management interface
-      command: nmcli -t -f IP4.ADDRESS,STATE device show {{ interface_mgmt }}
+      command: nmcli -t -f IP4.ADDRESS,GENERAL.STATE device show {{ interface_mgmt }}
       register: mgmt_ip_config
 
     - name: Fail if management interface has no IP or is not UP
       fail:
         msg: "Management interface {{ interface_mgmt }} has no IP address or is not UP."
-      when: mgmt_ip_config.stdout.find('IP4.ADDRESS') == -1 or mgmt_ip_config.stdout.find('connected') == -1
+      when: mgmt_ip_config.stdout.find('IP4.ADDRESS') == -1 or mgmt_ip_config.stdout.find('GENERAL.STATE:connected') == -1
 
     - name: Extract last octet of management interface IP
       set_fact:

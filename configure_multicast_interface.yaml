@@ -57,24 +57,24 @@
       block:
         - name: Set primary encoder subnets
           set_fact:
-            subnet_mc_in_p: "{{ primary_encoder_subnet_mc_in_p | regex_replace('0/.*', '') }}"
-            subnet_mc_in_s: "{{ primary_encoder_subnet_mc_in_s | regex_replace('0/.*', '') }}"
-            subnet_mc_out_p: "{{ primary_encoder_subnet_mc_out_p | regex_replace('0/.*', '') }}"
-            subnet_mc_out_s: "{{ primary_encoder_subnet_mc_out_s | regex_replace('0/.*', '') }}"
+            subnet_mc_in_p: "{{ primary_encoder_subnet_mc_in_p | regex_replace('.0/.*', '') }}"
+            subnet_mc_in_s: "{{ primary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
+            subnet_mc_out_p: "{{ primary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
+            subnet_mc_out_s: "{{ primary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
           when: mgmt_ip_config.stdout.find('10.17.11.0/24') != -1
 
         - name: Set secondary encoder subnets
           set_fact:
-            subnet_mc_in_p: "{{ secondary_encoder_subnet_mc_in_p | regex_replace('0/.*', '') }}"
-            subnet_mc_in_s: "{{ secondary_encoder_subnet_mc_in_s | regex_replace('0/.*', '') }}"
-            subnet_mc_out_p: "{{ secondary_encoder_subnet_mc_out_p | regex_replace('0/.*', '') }}"
-            subnet_mc_out_s: "{{ secondary_encoder_subnet_mc_out_s | regex_replace('0/.*', '') }}"
+            subnet_mc_in_p: "{{ secondary_encoder_subnet_mc_in_p | regex_replace('.0/.*', '') }}"
+            subnet_mc_in_s: "{{ secondary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
+            subnet_mc_out_p: "{{ secondary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
+            subnet_mc_out_s: "{{ secondary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
           when: mgmt_ip_config.stdout.find('10.17.11.0/24') == -1
 
-        - name: Fail if secondary encoder subnets are not set
+        - name: Fail if encoder subnets are not set
           fail:
-            msg: "Secondary encoder subnets are not set."
-          when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined
+            msg: "encoder subnets are not set."
+          when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
 
         - name: Configure interface_mc_in_p
           command: nmcli connection modify {{ interface_mc_in_p }} ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24

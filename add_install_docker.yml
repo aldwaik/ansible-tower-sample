@@ -1,10 +1,10 @@
 - name: Make sure required packages are installed
   hosts: all
+  become: yes
   tasks:
 
 - name: Install Docker on Rocky Linux 9
   hosts: all
-  become: yes
   tasks:
     - name: Install required packages
       dnf:

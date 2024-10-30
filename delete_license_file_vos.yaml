@@ -36,3 +36,8 @@
     - name: Print script execution result
       debug:
         var: script_execution
+
+    - name: Reboot the server
+      ansible.builtin.reboot:
+        msg: "Reboot initiated by Ansible"
+        reboot_timeout: 600

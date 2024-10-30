@@ -1,132 +1,94 @@
 ---
-- name: Configure XOS Management bond
+- name: Configure XOS multicast network interfaces
   hosts: all
   become: yes
   vars:
-    interface: "{{ 'eth0' if eth0_nmconnection.stat.exists else 'eno8303' }}"
+    interface_mgmt: "bond-mgmt"
+    interface_mc_in_p: "ens1f0np0"
+    interface_mc_in_s: "ens2f0np0"
+    interface_mc_out_p: "ens1f1np1"
+    interface_mc_out_s: "ens2f1np1"
+    primary_encoder_subnet_mc_in_p: "10.70.5.0/24"
+    primary_encoder_subnet_mc_in_s: "10.80.5.0/24"
+    primary_encoder_subnet_mc_out_p: "10.70.7.0/24"
+    primary_encoder_subnet_mc_out_s: "10.80.7.0/24"
+    secondary_encoder_subnet_mc_in_p: "10.70.6.0/24"
+    secondary_encoder_subnet_mc_in_s: "10.80.6.0/24"
+    secondary_encoder_subnet_mc_out_p: "10.70.8.0/24"
+    secondary_encoder_subnet_mc_out_s: "10.80.8.0/24"
+    last_octet: ""
+
   tasks:
-    - name: Check if ens1f0np0.nmconnection exists
-      stat:
-        path: /etc/NetworkManager/system-connections/eno8303.nmconnection
-      register: ens1f0np0_nmconnection
+    - name: Check if interfaces are available
+      command: ip link show {{ item }}
+      register: result
+      failed_when: result.rc != 0
+      with_items:
+        - "{{ interface_mgmt }}"
+        - "{{ interface_mc_in_p }}"
+        - "{{ interface_mc_in_s }}"
+        - "{{ interface_mc_out_p }}"
+        - "{{ interface_mc_out_s }}"
+      ignore_errors: yes
 
-    - name: Check if eth0.nmconnection exists
-      stat:
-        path: /etc/NetworkManager/system-connections/eth0.nmconnection
-      register: eth0_nmconnection
-      
-    - name: Fail if both eth0.nmconnection and eno8303.nmconnection exist
+    - name: Fail if any interface is not available
       fail:
-        msg: "Both eth0.nmconnection and eno8303.nmconnection exist. Manual intervention required."
-      when: eth0_nmconnection.stat.exists and eno8303_nmconnection.stat.exists
+        msg: "One or more interfaces are not available."
+      when: result.failed
 
+    - name: Check IP configuration of management interface
+      command: nmcli -t -f IP4.ADDRESS,STATE device show {{ interface_mgmt }}
+      register: mgmt_ip_config
 
-    - name: Rename eth0.nmconnection to eno8303.nmconnection if eth0.nmconnection exists and eno8303.nmconnection does not exist
-      shell: |
-        mv /etc/NetworkManager/system-connections/eth0.nmconnection /etc/NetworkManager/system-connections/eno8303.nmconnection
-      when: eth0_nmconnection.stat.exists and not eno8303_nmconnection.stat.exists
+    - name: Fail if management interface has no IP or is not UP
+      fail:
+        msg: "Management interface {{ interface_mgmt }} has no IP address or is not UP."
+      when: mgmt_ip_config.stdout.find('IP4.ADDRESS') == -1 or mgmt_ip_config.stdout.find('connected') == -1
 
-    - name: Re-register if eno8303.nmconnection exists after renaming
-      stat:
-        path: /etc/NetworkManager/system-connections/eno8303.nmconnection
-      register: eno8303_nmconnection
-
-    - name: Ensure eno8303.nmconnection config is correct
-      block:
-        - name: Set ID and interface-name to eno8303
-          lineinfile:
-            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
-            regexp: '^(id|interface-name)=.*'
-            line: '\1=eno8303'
-            backrefs: yes
-        - name: Replace any occurrence of eth0 with eno8303 inside eno8303.nmconnection
-          replace:
-            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
-            regexp: 'eth0'
-            replace: 'eno8303'
-        - name: Remove org.freedesktop.NetworkManager.origin line
-          ansible.builtin.lineinfile:
-            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
-            regexp: '^org.freedesktop.NetworkManager.origin='
-            state: absent
-        - name: Remove [user] section header
-          ansible.builtin.lineinfile:
-            path: /etc/NetworkManager/system-connections/eno8303.nmconnection
-            regexp: '^\[user\]'
-            state: absent
-      when: eno8303_nmconnection.stat.exists
-
-    - name: Set the interface variable
+    - name: Extract last octet of management interface IP
       set_fact:
-        interface: "{{ 'eth0' if eth0_nmconnection.stat.exists else 'eno8303' }}"
+        last_octet: "{{ mgmt_ip_config.stdout | regex_search('IP4.ADDRESS[^\n]*') | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
 
-    - name: Get the IP, Gateway, DNS, Domain, and Searches
-      shell: |
-        ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
-        gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
-        dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
-        domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
-        searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
-        # echo -e "IP_ADDR=$ip_addr\nGW=$gw\nDNS=$dns\nDOMAIN=$domain\nSEARCHES=$searches"
-        echo -e "IP_ADDR=$ip_addr"
-      register: network_info
-
-    - name: Debug network info output
+    - name: Print last octet
       debug:
-        var: network_info.stdout_lines
+        msg: "Last octet of management interface IP is {{ last_octet }}"
 
-    - name: Set variables from the network info
-      set_fact:
-        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
-        gw: "{{ '10.17.11.254' if network_info.stdout_lines[0].split('=')[1].startswith('10.17.11') else '10.17.12.254' }}"
-        dns: "{{ '10.17.11.240' if network_info.stdout_lines[0].split('=')[1].startswith('10.17.11') else '10.17.12.240' }}"
-        # gw: "10.17.11.254"
-        # dns: "10.17.11.240"
-        domain: "alrawabi.local"
+    - name: Determine subnet and configure interfaces
+      block:
+        - name: Set primary encoder subnets
+          set_fact:
+            subnet_mc_in_p: "{{ primary_encoder_subnet_mc_in_p }}"
+            subnet_mc_in_s: "{{ primary_encoder_subnet_mc_in_s }}"
+            subnet_mc_out_p: "{{ primary_encoder_subnet_mc_out_p }}"
+            subnet_mc_out_s: "{{ primary_encoder_subnet_mc_out_s }}"
+          when: mgmt_ip_config.stdout.find('10.17.11.0/24') != -1
 
-    - name: Fail if any network variable is empty
-      fail:
-        msg: "One or more network variables are empty. Please check the network configuration."
-      when: ip_addr == '' or gw == '' or dns == '' or domain == ''
+        - name: Set secondary encoder subnets
+          set_fact:
+            subnet_mc_in_p: "{{ secondary_encoder_subnet_mc_in_p }}"
+            subnet_mc_in_s: "{{ secondary_encoder_subnet_mc_in_s }}"
+            subnet_mc_out_p: "{{ secondary_encoder_subnet_mc_out_p }}"
+            subnet_mc_out_s: "{{ secondary_encoder_subnet_mc_out_s }}"
+          when: mgmt_ip_config.stdout.find('10.17.11.0/24') == -1
 
-    - name: Restart NetworkManager service
-      systemd:
-        name: NetworkManager
-        state: restarted
+        - name: Fail if subnet variables are not set
+          fail:
+            msg: "Multicast subnets are not set."
+          when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
 
-    - name: Check if bond-mgmt exists
-      shell: |
-        nmcli dev status | grep bond-mgmt
-      register: bond_mgmt_check
-      failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
+        - name: Configure interface_mc_in_p
+          command: nmcli connection modify {{ interface_mc_in_p }} ipv4.addresses {{ subnet_mc_in_p | regex_replace('/.*', '') }}.{{ last_octet }}/24
 
-    - name: Create bond-mgmt if not exists
-      shell: |
-        nmcli con del "Wired connection 1"
-        nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup
-        nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-1 ifname eno8303 master bond-mgmt
-        nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-2 ifname eno12399 master bond-mgmt
-      when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout == ""
-      args:
-        executable: /bin/bash
+        - name: Configure interface_mc_in_s
+          command: nmcli connection modify {{ interface_mc_in_s }} ipv4.addresses {{ subnet_mc_in_s | regex_replace('/.*', '') }}.{{ last_octet }}/24
 
-    - name: Configure bond-mgmt
-      shell: |
-        nmcli con mod eno8303 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
-        nmcli con mod bond-mgmt bond.options "primary=eno8303,mode=active-backup,miimon=100,updelay=100"
-        nmcli con mod bond-mgmt ipv4.addresses "{{ ip_addr }}"
-        nmcli con mod bond-mgmt ipv4.gateway "{{ gw }}"
-        nmcli con mod bond-mgmt ipv4.dns "{{ dns }}"
-        nmcli con mod bond-mgmt ipv4.dns-search "{{ domain }}"
-        nmcli con mod bond-mgmt ipv4.dns-search "{{ domain }}"
-        nmcli con mod bond-mgmt ipv4.method manual
-        nmcli con mod bond-mgmt connection.autoconnect yes
-        nmcli con mod bond-mgmt ipv6.method disabled
-        nmcli con up bond-mgmt
-      args:
-        executable: /bin/bash
+        - name: Configure interface_mc_out_p
+          command: nmcli connection modify {{ interface_mc_out_p }} ipv4.addresses {{ subnet_mc_out_p | regex_replace('/.*', '') }}.{{ last_octet }}/24
 
-    - name: Restart NetworkManager service (second time)
-      systemd:
+        - name: Configure interface_mc_out_s
+          command: nmcli connection modify {{ interface_mc_out_s }} ipv4.addresses {{ subnet_mc_out_s | regex_replace('/.*', '') }}.{{ last_octet }}/24
+
+    - name: Restart NetworkManager
+      service:
         name: NetworkManager
         state: restarted

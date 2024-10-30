@@ -34,7 +34,7 @@
     - name: Fail if any interface is not available
       fail:
         msg: "One or more interfaces are not available."
-      when: result.failed
+      when: result.results | selectattr('rc', 'ne', 0) | list | length > 0
 
     - name: Check IP configuration of management interface
       command: nmcli -t -f IP4.ADDRESS,STATE device show {{ interface_mgmt }}
@@ -71,10 +71,10 @@
             subnet_mc_out_s: "{{ secondary_encoder_subnet_mc_out_s }}"
           when: mgmt_ip_config.stdout.find('10.17.11.0/24') == -1
 
-        - name: Fail if subnet variables are not set
+        - name: Fail if secondary encoder subnets are not set
           fail:
-            msg: "Multicast subnets are not set."
-          when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
+            msg: "Secondary encoder subnets are not set."
+          when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined
 
         - name: Configure interface_mc_in_p
           command: nmcli connection modify {{ interface_mc_in_p }} ipv4.addresses {{ subnet_mc_in_p | regex_replace('/.*', '') }}.{{ last_octet }}/24

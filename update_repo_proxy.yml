@@ -2,6 +2,8 @@
   hosts: all
   become: yes
   vars:
+    epel_files:
+      - /etc/yum.repos.d/epel.repo
     repo_files:
       - /etc/yum.repos.d/epel.repo
       - /etc/yum.repos.d/rocky.repo
@@ -39,3 +41,11 @@
         path: /etc/yum.repos.d/epel.repo
         regexp: 'http://mirror.fcix.net.proxy.alrawabi.local/'
         replace: 'http://mirror.fcix.net/'
+      with_items: "{{ repo_files }}"
+
+    - name: Uncomment lines starting with "#baseurl" in repo files
+      replace:
+        path: "{{ item }}"
+        regexp: '^#baseurl'
+        replace: 'baseurl'
+      with_items: "{{ epel_files }}"

@@ -2,6 +2,12 @@
   hosts: all
   become: yes
   tasks:
+    - name: Enable and start cockpit.socket
+      ansible.builtin.systemd:
+        name: cockpit.socket
+        enabled: yes
+        state: started
+        
     - name: Install required packages
       dnf:
         name:
@@ -46,9 +52,3 @@
         name: docker
         state: started
         enabled: yes
-    
-    - name: Enable and start cockpit.socket
-      ansible.builtin.systemd:
-        name: cockpit.socket
-        enabled: yes
-        state: started

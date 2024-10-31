@@ -37,5 +37,5 @@
     - name: Replace URL in baseurl in "epel.repo"
       replace:
         path: /etc/yum.repos.d/epel.repo
-        regexp: 'https://download.example/pub/'
-        replace: 'http://mirror.fcix.net.proxy.alrawabi.local/'
+        regexp: 'http://mirror.fcix.net.proxy.alrawabi.local/'
+        replace: 'http://mirror.fcix.net/'

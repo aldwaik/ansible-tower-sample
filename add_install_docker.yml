@@ -7,7 +7,7 @@
         name: cockpit.socket
         enabled: yes
         state: started
-        
+
     - name: Install required packages
       dnf:
         name:
@@ -26,6 +26,7 @@
           - chrony
           - rsyslog
           - python3
+          - htop
         state: present
 
     - name: Check if Docker repo file exists

@@ -13,10 +13,10 @@
       - /etc/yum.repos.d/rocky-addons.repo
   tasks:
 
-    - name: Comment lines starting with "metalink" in repo files
+    - name: Comment lines starting with "mirrorlist" in repo files
       lineinfile:
         path: "{{ item }}"
-        regexp: '^metalink'
+        regexp: '^mirrorlist'
         state: absent
         backrefs: yes
       with_items: "{{ repo_files }}"

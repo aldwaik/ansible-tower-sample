@@ -16,22 +16,22 @@
     - name: Comment lines starting with "mirrorlist" in repo files
       replace:
         path: "{{ item }}"
-        regexp: '^mirrorlist'
-        replace: '#mirrorlist'
+        regexp: '^#mirrorlist'
+        replace: 'mirrorlist'
       with_items: "{{ repo_files }}"
 
     - name: Uncomment lines starting with "#baseurl" in repo files
       replace:
         path: "{{ item }}"
-        regexp: '^#baseurl'
-        replace: 'baseurl'
+        regexp: '^baseurl'
+        replace: '#baseurl'
       with_items: "{{ repo_files }}"
 
     - name: Replace URL in baseurl in rocky repo files
       replace:
         path: "{{ item }}"
-        regexp: 'http://dl.rockylinux.org/'
-        replace: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
+        regexp: 'http://dl.rockylinux.org.proxy.alrawabi.local/'
+        replace: 'http://dl.rockylinux.org/'
       with_items: "{{ rocky_repo_files }}"
 
     - name: Replace URL in baseurl in "epel.repo"

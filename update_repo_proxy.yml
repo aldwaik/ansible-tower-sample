@@ -14,11 +14,10 @@
   tasks:
 
     - name: Comment lines starting with "mirrorlist" in repo files
-      lineinfile:
+      replace:
         path: "{{ item }}"
         regexp: '^mirrorlist'
-        state: absent
-        backrefs: yes
+        replace: '#mirrorlist'
       with_items: "{{ repo_files }}"
 
     - name: Uncomment lines starting with "#baseurl" in repo files

@@ -1,0 +1,110 @@
+---
+- name: Configure Management Bond Interface on Debian 12
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - ifenslave
+          - bridge-utils
+        state: present
+        update_cache: yes
+
+    - name: Get current IP configuration from eno8303
+      shell: |
+        ip_addr=$(ip addr show eno8303 | grep 'inet ' | awk '{print $2}')
+        gateway=$(ip route | grep default | grep eno8303 | awk '{print $3}')
+        subnet=$(ip route | grep -v default | grep eno8303 | grep -v 169.254 | awk '{print $1}')
+        nameserver=$(grep nameserver /etc/resolv.conf | head -1 | awk '{print $2}')
+        echo "IP_ADDR=${ip_addr}"
+        echo "GATEWAY=${gateway}"
+        echo "SUBNET=${subnet}"
+        echo "NAMESERVER=${nameserver}"
+      register: network_info
+      changed_when: false
+
+    - name: Set network variables
+      set_fact:
+        current_ip: "{{ network_info.stdout_lines | select('match', '^IP_ADDR=.*') | first | regex_replace('^IP_ADDR=', '') }}"
+        current_gateway: "{{ network_info.stdout_lines | select('match', '^GATEWAY=.*') | first | regex_replace('^GATEWAY=', '') }}"
+        current_subnet: "{{ network_info.stdout_lines | select('match', '^SUBNET=.*') | first | regex_replace('^SUBNET=', '') }}"
+        current_nameserver: "{{ network_info.stdout_lines | select('match', '^NAMESERVER=.*') | first | regex_replace('^NAMESERVER=', '') }}"
+
+    - name: Load bonding module
+      modprobe:
+        name: bonding
+        state: present
+
+    - name: Ensure bonding module loads on boot
+      lineinfile:
+        path: /etc/modules
+        line: bonding
+        state: present
+        create: yes
+
+    - name: Configure network interfaces
+      template:
+        src: interfaces.j2
+        dest: /etc/network/interfaces
+        backup: yes
+      notify: restart networking
+
+    - name: Disable IPv6
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "{{ item }}"
+        state: present
+      with_items:
+        - "net.ipv6.conf.all.disable_ipv6 = 1"
+        - "net.ipv6.conf.default.disable_ipv6 = 1"
+        - "net.ipv6.conf.lo.disable_ipv6 = 1"
+
+    - name: Apply sysctl changes
+      command: sysctl -p
+      changed_when: false
+
+  handlers:
+    - name: restart networking
+      service:
+        name: networking
+        state: restarted
+
+  templates:
+    - name: interfaces.j2
+      content: |
+        # This file describes the network interfaces available on your system
+        # and how to activate them. For more information, see interfaces(5).
+        
+        source /etc/network/interfaces.d/*
+        
+        # The loopback network interface
+        auto lo
+        iface lo inet loopback
+        
+        # Primary interface
+        auto eno8303
+        iface eno8303 inet manual
+            bond-master bond-MGMT
+        
+        # Secondary interface
+        auto eno8403
+        iface eno8403 inet manual
+            bond-master bond-MGMT
+        
+        # Bond interface
+        auto bond-MGMT
+        iface bond-MGMT inet static
+            address {{ current_ip }}
+            netmask {{ current_subnet | regex_replace('^.*/', '') | ipaddr('netmask') }}
+            gateway {{ current_gateway }}
+            dns-nameservers {{ current_nameserver }}
+            bond-mode active-backup
+            bond-miimon 100
+            bond-updelay 100
+            bond-slaves eno8303 eno8403
+            bond-primary eno8303
+            post-up ip link set bond-MGMT up
+            post-up ip link set eno8303 up
+            post-up ip link set eno8403 up
+            bond-xmit-hash-policy layer2

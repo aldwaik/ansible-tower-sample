@@ -5,6 +5,16 @@
   vars:
     interface: "eno8303"
   tasks:
+      - name: Check if bond-mgmt exists
+      shell: |
+        nmcli dev status | grep bond-mgmt
+      register: bond_mgmt_check
+
+    - name: Check if bond-mgmt exists
+      shell: |
+        nmcli dev status | grep bond-mgmt
+      register: bond_mgmt_check
+      failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
 
     - name: Remove 'KS-RHEL94' line from hostname fike if detected
       lineinfile:
@@ -15,6 +25,7 @@
     - name: set hostname from DCHP
       shell: |
         nmcli con mod {{ interface }} ipv4.dhcp-hostname yes
+      when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
 
     - name: Restart NetworkManager service
       systemd:
@@ -48,10 +59,10 @@
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
-        gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
-        dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
-        domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
-        searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
+        # gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
+        # dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
+        # domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
+        # searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
         # echo -e "IP_ADDR=$ip_addr\nGW=$gw\nDNS=$dns\nDOMAIN=$domain\nSEARCHES=$searches"
         echo -e "IP_ADDR=$ip_addr"
       register: network_info
@@ -90,7 +101,7 @@
 
     - name: Create bond-mgmt if not exists
       shell: |
-        nmcli con del "Wired connection 1"
+        nmcli con del "eno8303"
         nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup
         nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-1 ifname eno8303 master bond-mgmt
         nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-2 ifname eno8403 master bond-mgmt

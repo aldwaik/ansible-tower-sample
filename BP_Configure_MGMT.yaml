@@ -5,10 +5,10 @@
   vars:
     interface: "eno8303"
   tasks:
-      - name: Check if bond-mgmt exists
-      shell: |
-        nmcli dev status | grep bond-mgmt
-      register: bond_mgmt_check
+    - name: Check if bond-mgmt exists
+    shell: |
+      nmcli dev status | grep bond-mgmt
+    register: bond_mgmt_check
 
     - name: Check if bond-mgmt exists
       shell: |

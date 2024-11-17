@@ -7,7 +7,7 @@
   tasks:
 
     - name: Remove org.freedesktop.NetworkManager.origin line
-    ansible.builtin.lineinfile:
+      ansible.builtin.lineinfile:
       path: /etc/hostname
       regexp: 'KS-RHEL94'
       state: absent
@@ -81,7 +81,7 @@
 
     - name: Stop execution
       meta: end_play
-      
+
     - name: Check if bond-mgmt exists
       shell: |
         nmcli dev status | grep bond-mgmt

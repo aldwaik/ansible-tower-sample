@@ -7,10 +7,10 @@
   tasks:
 
     - name: Remove org.freedesktop.NetworkManager.origin line
-      ansible.builtin.lineinfile:
-      path: /etc/hostname
-      regexp: 'KS-RHEL94'
-      state: absent
+      lineinfile:
+        path: /etc/hostname
+        regexp: 'KS-RHEL94'
+        state: absent
 
     - name: set hostname from DCHP
       shell: |

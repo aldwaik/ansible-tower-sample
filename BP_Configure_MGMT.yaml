@@ -10,12 +10,6 @@
         nmcli dev status | grep bond-mgmt
       register: bond_mgmt_check
 
-    - name: Check if bond-mgmt exists
-      shell: |
-        nmcli dev status | grep bond-mgmt
-      register: bond_mgmt_check
-      failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
-
     - name: Remove 'KS-RHEL94' line from hostname fike if detected
       lineinfile:
         path: /etc/hostname
@@ -25,7 +19,7 @@
     - name: set hostname from DCHP
       shell: |
         nmcli con mod {{ interface }} ipv4.dhcp-hostname yes
-      when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
+      when: bond_mgmt_check.rc == 0 or bond_mgmt_check.stdout == ""
 
     - name: Restart NetworkManager service
       systemd:
@@ -85,11 +79,6 @@
         msg: "One or more network variables are empty. Please check the network configuration."
       when: ip_addr == '' or gw == '' or dns == '' or domain == ''
 
-    - name: Restart NetworkManager service
-      systemd:
-        name: NetworkManager
-        state: restarted
-
     # - name: Stop execution
     #   meta: end_play
 
@@ -98,6 +87,12 @@
         nmcli dev status | grep bond-mgmt
       register: bond_mgmt_check
       failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
+
+    - name: delete "eno8303"
+      shell: |
+        nmcli con del "eno8303"
+      args:
+        executable: /bin/bash
 
     - name: Create bond-mgmt if not exists
       shell: |

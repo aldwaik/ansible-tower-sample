@@ -101,6 +101,7 @@
     - name: Configure bond-mgmt
       shell: |
         nmcli con mod eno8303 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
+        nmcli con mod eno8403 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
         nmcli con mod bond-mgmt bond.options "primary=eno8303,mode=active-backup,miimon=100,updelay=100"
         nmcli con mod bond-mgmt ipv4.addresses "{{ ip_addr }}"
         nmcli con mod bond-mgmt ipv4.gateway "{{ gw }}"

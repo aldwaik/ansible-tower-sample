@@ -3,8 +3,8 @@
   hosts: all
   become: yes
   vars:
-    interface_1: "eno12399np0"
-    interface_2: "ens3f0np0"
+    interface_1: "eno12499np0"
+    interface_2: "ens3f1np1"
     subnet: "10.70.77.0/24"
     bond_name: bond-be
   tasks:

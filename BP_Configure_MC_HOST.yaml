@@ -1,5 +1,5 @@
 ---
-- name: Configure BP BE Bond
+- name: Configure BP MC Connections
   hosts: all
   become: yes
   vars:
@@ -12,13 +12,13 @@
   tasks:
     - name: Check if {{ conn_P }} exists
       shell: |
-        nmcli dev status | grep {{ bond_name }}
+        nmcli dev status | grep {{ conn_P }}
       register: conn_P_check
       ignore_errors: yes
 
     - name: Check if {{ conn_S }} exists
       shell: |
-        nmcli dev status | grep {{ bond_name }}
+        nmcli dev status | grep {{ conn_S }}
       register: conn_S_check
       ignore_errors: yes
 

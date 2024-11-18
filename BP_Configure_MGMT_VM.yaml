@@ -19,7 +19,7 @@
 
     - name: Set the connection variable
       set_fact:
-        connection: "{{ {{ connection_new }} if new_connection.stat.exists else {{ connection_old }} }}"
+        connection: "{{ connection_new if new_connection.stat.exists else connection_old }}"
 
     - name: Debug connection variable
       debug:
@@ -67,10 +67,10 @@
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
-        # gw=$(nmcli -t -f IP4.GATEWAY dev show {{ interface }} | cut -d: -f2)
-        # dns=$(nmcli -t -f IP4.DNS dev show {{ interface }} | cut -d: -f2)
-        # domain=$(nmcli -t -f IP4.DOMAIN dev show {{ interface }} | cut -d: -f2)
-        # searches=$(nmcli -t -f IP4.SEARCHES dev show {{ interface }} | cut -d: -f2)
+        # gw=$(nmcli -t -f IP4.GATEWAY dev show {{ connection }} | cut -d: -f2)
+        # dns=$(nmcli -t -f IP4.DNS dev show {{ connection }} | cut -d: -f2)
+        # domain=$(nmcli -t -f IP4.DOMAIN dev show {{ connection }} | cut -d: -f2)
+        # searches=$(nmcli -t -f IP4.SEARCHES dev show {{ connection }} | cut -d: -f2)
         # echo -e "IP_ADDR=$ip_addr\nGW=$gw\nDNS=$dns\nDOMAIN=$domain\nSEARCHES=$searches"
         echo -e "IP_ADDR=$ip_addr"
       register: network_info

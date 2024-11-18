@@ -38,6 +38,10 @@
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
       register: network_info
 
+    - name: Debug network info output
+      debug:
+        var: network_info.stdout_lines
+        
     - name: Set variables from the network info
       set_fact:
         ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"

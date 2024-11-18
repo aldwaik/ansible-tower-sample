@@ -50,6 +50,14 @@
       args:
         executable: /bin/bash
 
+    - name: Modify bond {{ bond_name }} slave interfaces, if exists
+      shell: |
+        nmcli con mod {{ bond_name }}-interface-1 ifname {{ interface_1 }} master {{ bond_name }}
+        nmcli con mod {{ bond_name }}-interface-2 ifname {{ interface_2 }} master {{ bond_name }}
+      when: bond_check.rc == 0 or bond_check.stdout != ""
+      args:
+        executable: /bin/bash
+
     - name: Configure bond {{ bond_name }}
       shell: |
         nmcli con mod {{ bond_name }} bond.options "primary={{ interface_1 }},mode=active-backup,miimon=100,updelay=100"

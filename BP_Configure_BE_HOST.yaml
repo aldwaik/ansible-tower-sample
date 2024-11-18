@@ -53,7 +53,7 @@
     - name: Configure bond {{ bond_name }}
       shell: |
         nmcli con mod {{ bond_name }} bond.options "primary={{ interface_1 }},mode=active-backup,miimon=100,updelay=100"
-        nmcli con mod {{ bond_name }} ipv4.addresses "{{ ip_addr }}"
+        nmcli con mod {{ bond_name }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 
         nmcli con mod {{ bond_name }} ipv4.method manual
         nmcli con mod {{ bond_name }} connection.autoconnect yes
         nmcli con mod {{ bond_name }} ipv6.method disabled

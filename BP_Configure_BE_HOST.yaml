@@ -12,6 +12,7 @@
       shell: |
         nmcli dev status | grep {{ bond_name }}
       register: bond_check
+      ignore_errors: yes
 
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |

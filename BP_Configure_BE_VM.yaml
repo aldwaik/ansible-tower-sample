@@ -19,19 +19,19 @@
       register: old_connection
       ignore_errors: yes
 
-    - name: Set the connection variable
+    - name: Set the connection variable if old connection is found
       set_fact:
         connection: "{{ connection_old }}"
       when: old_connection.rc ==0
 
-    - name: Set the connection variable
+    - name: Set the connection variable if new connection is found
       set_fact:
         connection: "{{ connection_new }}"
       when: new_connection.rc ==0
 
     - name: Debug connection variable
       debug:
-        var: connection.stdout_lines
+        var: connection
 
     - name: Check IP configuration of management interface
       shell: |

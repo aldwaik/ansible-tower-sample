@@ -56,14 +56,17 @@
     - name: Extract last octet of management interface IP
       set_fact:
         subnet_first_3_octet: "{{ subnet | regex_replace('.0/.*', '') }}"
-        last_octet: "{{ mgmt_ip_config.stdout | regex_search('IP4.ADDRESS[^\n]*') | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
+        last_octet: "{{ ip_addr | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
 
-    - name: Print last octet
+    - name: Print first three octets and last octet
       debug:
         msg: |
           "First three octets {{ subnet_first_3_octet }}""
           "Last octet of management interface IP is {{ last_octet }}"
 
+    - name: Stop execution
+      meta: end_play
+      
     - name: Configure BE
       shell: |
         nmcli con mod {{ connection }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 

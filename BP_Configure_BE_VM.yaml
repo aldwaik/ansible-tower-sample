@@ -1,0 +1,69 @@
+---
+- name: Configure XOS Management bond
+  hosts: all
+  become: yes
+  vars:
+    interface: "ens224"
+    connection_old: "Wired Connection 1"
+    connection_new: "Connection-BE"
+    connection_mgmt: "Connection_MGMT"
+    subnet: "10.70.77.8/24"
+  tasks:
+    - name: Check if the new connection exists
+      command: nmcli connection show {{ connection_new }}
+      register: new_connection
+      ignore_errors: yes
+
+    - name: Check if the old connection exists
+      command: nmcli connection show {{ connection_old }}
+      register: old_connection
+      ignore_errors: yes
+
+    - name: Set the connection variable
+      set_fact:
+        connection: "{{ connection_old }}"
+      when: old_connection.rc ==0
+
+    - name: Set the connection variable
+      set_fact:
+        connection: "{{ connection_new }}"
+      when: new_connection.rc ==0
+
+    - name: Debug connection variable
+      debug:
+        var: connection.stdout_lines
+
+    - name: Check IP configuration of management interface
+      command: nmcli -t -f IP4.ADDRESS,GENERAL.STATE device show {{ connection_mgmt }}
+      register: mgmt_ip_config
+
+    - name: Fail if management interface has no IP or is not UP
+      fail:
+        msg: "Management interface {{ interface_mgmt }} has no IP address or is not UP."
+      when: mgmt_ip_config.stdout | regex_search('IP4.ADDRESS[^\n]*') is not defined or mgmt_ip_config.stdout.find('GENERAL.STATE:100 (connected)') == -1
+
+    - name: Extract last octet of management interface IP
+      set_fact:
+        subnet_first_3_octet: "{{ subnet | regex_replace('.0/.*', '') }}"
+        last_octet: "{{ mgmt_ip_config.stdout | regex_search('IP4.ADDRESS[^\n]*') | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
+
+    - name: Print last octet
+      debug:
+        msg: |
+          "First three octets {{ subnet_first_3_octet }}""
+          "Last octet of management interface IP is {{ last_octet }}"
+
+    - name: Configure BE
+      shell: |
+        nmcli con mod {{ connection }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 
+        nmcli con mod {{ connection }} ipv4.method manual
+        nmcli con mod {{ connection }} ipv6.method disabled
+        nmcli con mod {{ connection }} connection.id {{ connection_new }}
+        nmcli con up {{ connection }}
+      args:
+        executable: /bin/bash
+
+    - name: Restart NetworkManager service
+      systemd:
+        name: NetworkManager
+        state: restarted

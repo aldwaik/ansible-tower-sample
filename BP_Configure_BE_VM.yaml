@@ -4,7 +4,7 @@
   become: yes
   vars:
     interface: "ens224"
-    connection_old: "Wired Connection 1"
+    connection_old: "Wired connection 1"
     connection_new: "Connection-BE"
     connection_mgmt: "Connection_MGMT"
     subnet: "10.70.77.8/24"

@@ -4,6 +4,7 @@
   become: yes
   vars:
     interface: "ens192"
+    connection: "Connection-MGMT"
   tasks:
     - name: Remove 'KS-RHEL94' line from hostname fike if detected
       lineinfile:
@@ -87,6 +88,7 @@
         nmcli con mod {{ interface }} ipv4.method manual
         nmcli con mod {{ interface }} connection.autoconnect yes
         nmcli con mod {{ interface }} ipv6.method disabled
+        nmcli con mod {{ interface }} connection.id "Connection-MGMT"
         nmcli con up {{ interface }}
       args:
         executable: /bin/bash

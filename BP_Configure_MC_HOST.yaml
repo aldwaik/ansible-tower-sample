@@ -6,7 +6,7 @@
     interface_P: "eno12399np0"
     interface_S: "ens3f0np0"
     subnet_P: "10.70.9.0/24"
-    subnet_S: "10.70.9.0/24"
+    subnet_S: "10.80.9.0/24"
     conn_P: connection-MC-P
     conn_S: connection-MC-S
   tasks:

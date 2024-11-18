@@ -7,8 +7,8 @@
     interface_S: "ens3f0np0"
     subnet_P: "10.70.9.0/24"
     subnet_S: "10.70.9.0/24"
-    conn_P: Connection-MC-P
-    conn_S: Connection-MC-S
+    conn_P: connection-MC-P
+    conn_S: connection-MC-S
   tasks:
     - name: Delete {{ conn_P }}
       shell: |
@@ -16,6 +16,7 @@
             nmcli connection delete "$conn"
         done
         nmcli connection delete {{ interface_P }}
+        nmcli connection delete Connection-MC-P
       ignore_errors: yes
 
     - name: Delete {{ conn_S }}
@@ -24,6 +25,7 @@
             nmcli connection delete "$conn"
         done
         nmcli connection delete {{ interface_S }}
+        nmcli connection delete Connection-MC-S
       ignore_errors: yes
 
     - name: Check if {{ conn_P }} exists

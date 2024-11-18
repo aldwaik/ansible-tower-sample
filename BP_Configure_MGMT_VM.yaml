@@ -19,7 +19,7 @@
 
     - name: Set the connection variable
       set_fact:
-        connection: "{{ connection_new if new_connection.stat.exists else connection_old }}"
+        connection: "{{ connection_new if (new_connection.rc ==0) else connection_old }}"
 
     - name: Debug connection variable
       debug:

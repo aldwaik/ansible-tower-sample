@@ -10,6 +10,22 @@
     conn_P: Connection-MC-P
     conn_S: Connection-MC-S
   tasks:
+    - name: Delete {{ conn_P }}
+      shell: |
+        for conn in $(nmcli -t -f NAME connection show | grep "{{ conn_P }}"); do
+            nmcli connection delete "$conn"
+        done
+        nmcli connection delete {{ interface_P }}
+      ignore_errors: yes
+
+    - name: Delete {{ conn_S }}
+      shell: |
+        for conn in $(nmcli -t -f NAME connection show | grep "{{ conn_S }}"); do
+            nmcli connection delete "$conn"
+        done
+        nmcli connection delete {{ interface_S }}
+      ignore_errors: yes
+
     - name: Check if {{ conn_P }} exists
       shell: |
         nmcli dev status | grep {{ conn_P }}

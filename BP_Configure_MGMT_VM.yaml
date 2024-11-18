@@ -19,7 +19,13 @@
 
     - name: Set the connection variable
       set_fact:
-        connection: "{{ connection_new if (new_connection.rc ==0) else connection_old }}"
+        connection: "{{ connection_old }}"
+      when: old_connection.rc ==0
+
+    - name: Set the connection variable
+      set_fact:
+        connection: "{{ connection_new }}"
+      when: new_connection.rc ==0
 
     - name: Debug connection variable
       debug:

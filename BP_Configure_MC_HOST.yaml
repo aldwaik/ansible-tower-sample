@@ -3,7 +3,7 @@
   hosts: all
   become: yes
   vars:
-    interface_P: "eno12399np1"
+    interface_P: "eno12399np0"
     interface_S: "ens3f0np0"
     subnet_P: "10.70.9.0/24"
     subnet_S: "10.70.9.0/24"

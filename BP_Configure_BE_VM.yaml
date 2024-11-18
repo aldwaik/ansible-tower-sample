@@ -34,7 +34,8 @@
         var: connection.stdout_lines
 
     - name: Check IP configuration of management interface
-      command: "nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2"
+      shell: |
+        nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2
       register: mgmt_ip_config
 
     - name: Fail if management interface has no IP or is not UP

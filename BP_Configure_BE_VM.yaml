@@ -64,9 +64,6 @@
           "First three octets {{ subnet_first_3_octet }}""
           "Last octet of management interface IP is {{ last_octet }}"
 
-    - name: Stop execution
-      meta: end_play
-
     - name: Configure BE
       shell: |
         nmcli con mod {{ connection }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 

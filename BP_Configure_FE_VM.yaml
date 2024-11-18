@@ -1,0 +1,62 @@
+---
+- name: Configure BP FE VM
+  hosts: all
+  become: yes
+  vars:
+    interface: "ens256"
+    connection_old: "Wired connection 1"
+    connection_new: "Connection-FE"
+    connection_mgmt: "Connection_MGMT"
+    subnet: "10.70.78.0/24"
+  tasks:
+    - name: Delete old connections
+      shell: |
+        nmcli connection delete {{ connection_old }}
+        nmcli connection delete {{ connection_bew }}
+      ignore_errors: yes
+
+    - name: Check IP configuration of management interface
+      shell: |
+        ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
+        echo -e "IP_ADDR=$ip_addr"
+      register: network_info
+
+    - name: Debug network info output
+      debug:
+        var: network_info
+
+    - name: Set variables from the network info
+      set_fact:
+        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
+
+    - name: Fail if any network variable is empty
+      fail:
+        msg: "One or more network variables are empty. Please check the network configuration."
+      when: ip_addr == ''
+
+
+    - name: Extract First three octets from the subnet and last octet of management interface IP
+      set_fact:
+        subnet_first_3_octet: "{{ subnet | regex_replace('.0/.*', '') }}"
+        last_octet: "{{ ip_addr | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
+
+    - name: Print first three octets and last octet
+      debug:
+        msg: |
+          "First three octets {{ subnet_first_3_octet }}""
+          "Last octet of management interface IP is {{ last_octet }}"
+
+    - name: Configure BE
+      shell: |
+        nmcli con add type ethernet connection.id {{ connection_new }} ifname {{ interface }}
+        nmcli con mod "{{ connection_new }}" ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 
+        nmcli con mod "{{ connection_new }}" ipv4.method manual
+        nmcli con mod "{{ connection_new }}" ipv6.method disabled
+        nmcli con up "{{ connection_new }}"
+      args:
+        executable: /bin/bash
+
+    - name: Restart NetworkManager service
+      systemd:
+        name: NetworkManager
+        state: restarted

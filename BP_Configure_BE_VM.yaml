@@ -10,7 +10,7 @@
     subnet: "10.70.77.8/24"
   tasks:
     - name: Check if the new connection exists
-      command: nmcli connection show "{{ connection_new }}
+      command: nmcli connection show "{{ connection_new }}"
       register: new_connection
       ignore_errors: yes
 

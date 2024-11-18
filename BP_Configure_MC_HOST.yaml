@@ -80,7 +80,7 @@
 
     - name: Configure Connection {{ conn_P }}
       shell: |
-        nmcli con mod {{ conn_P }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 
+        nmcli con mod {{ conn_P }} ipv4.addresses {{ subnet_first_3_octet_P }}.{{ last_octet }}/24 
         nmcli con mod {{ conn_P }} ipv4.method manual
         nmcli con mod {{ conn_P }} connection.autoconnect yes
         nmcli con mod {{ conn_P }} ipv6.method disabled
@@ -90,7 +90,7 @@
 
     - name: Configure Connection {{ conn_S }}
       shell: |
-        nmcli con mod {{ conn_S }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 
+        nmcli con mod {{ conn_S }} ipv4.addresses {{ subnet_first_3_octet_S }}.{{ last_octet }}/24 
         nmcli con mod {{ conn_S }} ipv4.method manual
         nmcli con mod {{ conn_S }} connection.autoconnect yes
         nmcli con mod {{ conn_S }} ipv6.method disabled

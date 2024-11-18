@@ -1,5 +1,5 @@
 ---
-- name: Configure XOS Management bond
+- name: Configure BP BE VM
   hosts: all
   become: yes
   vars:
@@ -53,7 +53,7 @@
       when: ip_addr == ''
 
 
-    - name: Extract last octet of management interface IP
+    - name: Extract First three octets from the subnet and last octet of management interface IP
       set_fact:
         subnet_first_3_octet: "{{ subnet | regex_replace('.0/.*', '') }}"
         last_octet: "{{ ip_addr | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"

@@ -1,5 +1,5 @@
 ---
-- name: Configure XOS Management bond
+- name: Configure BP MGMT VM
   hosts: all
   become: yes
   vars:

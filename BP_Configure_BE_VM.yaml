@@ -35,13 +35,18 @@
 
     - name: Check IP configuration of management interface
       shell: |
-        nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2
-      register: mgmt_ip_config
+        ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
+      register: network_info
 
-    - name: Fail if management interface has no IP or is not UP
+    - name: Set variables from the network info
+      set_fact:
+        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
+
+    - name: Fail if any network variable is empty
       fail:
-        msg: "Management interface {{ interface_mgmt }} has no IP address or is not UP."
-      when: mgmt_ip_config.stdout == ''
+        msg: "One or more network variables are empty. Please check the network configuration."
+      when: ip_addr == ''
+
 
     - name: Extract last octet of management interface IP
       set_fact:

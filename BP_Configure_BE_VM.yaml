@@ -7,7 +7,7 @@
     connection_old: "Wired connection 1"
     connection_new: "Connection-BE"
     connection_mgmt: "Connection_MGMT"
-    subnet: "10.70.77.8/24"
+    subnet: "10.70.77.0/24"
   tasks:
     - name: Check if the new connection exists
       command: nmcli connection show "{{ connection_new }}"
@@ -66,7 +66,7 @@
 
     - name: Stop execution
       meta: end_play
-      
+
     - name: Configure BE
       shell: |
         nmcli con mod {{ connection }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 

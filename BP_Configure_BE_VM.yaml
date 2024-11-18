@@ -45,7 +45,7 @@
 
     - name: Set variables from the network info
       set_fact:
-        ip_addr: "{{ network_info.split('=')[1] | default('') }}"
+        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
 
     - name: Fail if any network variable is empty
       fail:

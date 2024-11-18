@@ -36,6 +36,7 @@
     - name: Check IP configuration of management interface
       shell: |
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
+        echo -e "IP_ADDR=$ip_addr"
       register: network_info
 
     - name: Debug network info output

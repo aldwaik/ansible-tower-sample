@@ -70,7 +70,7 @@
         nmcli con mod "{{ connection }}" ipv4.method manual
         nmcli con mod "{{ connection }}" ipv6.method disabled
         nmcli con mod "{{ connection }}" connection.id "{{ connection_new }}"
-        nmcli con up "{{ connection }}"
+        nmcli con up "{{ connection_new }}"
       args:
         executable: /bin/bash
 

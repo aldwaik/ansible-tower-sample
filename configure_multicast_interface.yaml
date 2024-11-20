@@ -68,7 +68,7 @@
             interface_mc_in_s: "{{ primary_encoder_interface_mc_in_s }}"
             interface_mc_out_p: "{{ primary_encoder_interface_mc_out_p }}"
             interface_mc_out_s: "{{ primary_encoder_interface_mc_out_s }}"
-          when: mgmt_ip_config.stdout.find('10.17.11.0/24') != -1
+          when: mgmt_ip_config.stdout.find('10.17.11.') != -1
 
         - name: Set secondary encoder subnets
           set_fact:
@@ -80,7 +80,7 @@
             interface_mc_in_s: "{{ secondary_encoder_interface_mc_in_s }}"
             interface_mc_out_p: "{{ secondary_encoder_interface_mc_out_p }}"
             interface_mc_out_s: "{{ secondary_encoder_interface_mc_out_s }}"
-          when: mgmt_ip_config.stdout.find('10.17.12.0/24') == -1
+          when: mgmt_ip_config.stdout.find('10.17.12.') != -1
 
         - name: Check if multicast interfaces are available
           command: ip link show {{ item }}
@@ -93,7 +93,7 @@
             - "{{ interface_mc_out_s }}"
           ignore_errors: yes
 
-        - name: Fail if multicast interface/s  not available
+        - name: Fail if multicast interface/s not available
           fail:
             msg: "Multicast interface/s not available."
           when: result_mc.results | selectattr('rc', 'ne', 0) | list | length > 0

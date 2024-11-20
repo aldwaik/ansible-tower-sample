@@ -4,14 +4,21 @@
   become: yes
   vars:
     interface_mgmt: "bond-mgmt"
-    interface_mc_in_p: "ens1f0np0"
-    interface_mc_in_s: "ens2f0np0"
-    interface_mc_out_p: "ens1f1np1"
-    interface_mc_out_s: "ens2f1np1"
+    primary_encoder_interface_mc_in_p: "ens1f0np0"
+    primary_encoder_interface_mc_in_s: "ens2f0np0"
+    primary_encoder_interface_mc_out_p: "ens1f1np1"
+    primary_encoder_interface_mc_out_s: "ens2f1np1"
+
+    secondary_encoder_interface_mc_in_p: "ens2f0np0"
+    secondary_encoder_interface_mc_in_s: "ens1f0np0"
+    secondary_encoder_interface_mc_out_p: "ens2f1np1"
+    secondary_encoder_interface_mc_out_s: "ens1f1np1"
+
     primary_encoder_subnet_mc_in_p: "10.70.5.0/24"
     primary_encoder_subnet_mc_in_s: "10.80.5.0/24"
     primary_encoder_subnet_mc_out_p: "10.70.7.0/24"
     primary_encoder_subnet_mc_out_s: "10.80.7.0/24"
+
     secondary_encoder_subnet_mc_in_p: "10.70.6.0/24"
     secondary_encoder_subnet_mc_in_s: "10.80.6.0/24"
     secondary_encoder_subnet_mc_out_p: "10.70.8.0/24"
@@ -61,6 +68,10 @@
             subnet_mc_in_s: "{{ primary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
             subnet_mc_out_p: "{{ primary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
             subnet_mc_out_s: "{{ primary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
+            interface_mc_in_p: "{{ primary_encoder_interface_mc_in_p }}"
+            interface_mc_in_s: "{{ primary_encoder_interface_mc_in_s }}"
+            interface_mc_out_p: "{{ primary_encoder_interface_mc_out_p }}"
+            interface_mc_out_s: "{{ primary_encoder_interface_mc_out_s }}"
           when: mgmt_ip_config.stdout.find('10.17.11.0/24') != -1
 
         - name: Set secondary encoder subnets
@@ -69,7 +80,11 @@
             subnet_mc_in_s: "{{ secondary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
             subnet_mc_out_p: "{{ secondary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
             subnet_mc_out_s: "{{ secondary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
-          when: mgmt_ip_config.stdout.find('10.17.11.0/24') == -1
+            interface_mc_in_p: "{{ secondary_encoder_interface_mc_in_p }}"
+            interface_mc_in_s: "{{ secondary_encoder_interface_mc_in_s }}"
+            interface_mc_out_p: "{{ secondary_encoder_interface_mc_out_p }}"
+            interface_mc_out_s: "{{ secondary_encoder_interface_mc_out_s }}"
+          when: mgmt_ip_config.stdout.find('10.17.12.0/24') == -1
 
         - name: Fail if encoder subnets are not set
           fail:

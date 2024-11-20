@@ -46,7 +46,7 @@
           "First three octets {{ subnet_first_3_octet }}""
           "Last octet of management interface IP is {{ last_octet }}"
 
-    - name: Configure BE
+    - name: Configure FE
       shell: |
         nmcli con add type ethernet connection.id {{ connection_new }} ifname {{ interface }}
         nmcli con mod "{{ connection_new }}" ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 

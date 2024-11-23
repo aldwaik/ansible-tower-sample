@@ -4,7 +4,8 @@
   become: yes
   tasks:
     - name: Get the IP address of eno8303
-      command: ip -4 addr show eno8303 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
+      shell: |
+        ip -4 addr show eno8303 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
       register: ip_address
 
     - name: Save the IP address to a variable

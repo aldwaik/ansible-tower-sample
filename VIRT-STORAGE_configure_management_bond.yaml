@@ -4,8 +4,7 @@
   become: yes
   tasks:
     - name: Get the IP address of eno8303
-      shell: |
-        ip -4 addr show eno8303 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
+      command: ip -4 addr show eno8303 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
       register: ip_address
 
     - name: Save the IP address to a variable
@@ -19,49 +18,37 @@
         state: absent
 
     - name: Check if bond-MGMT connection exists
-      command: nmcli connection show bond-MGMT
+      shell: nmcli connection show bond-MGMT
       register: bond_check
       ignore_errors: yes
 
     - name: Create bond connection if not exists
-      nmcli:
-        conn_name: bond-MGMT
-        ifname: bond0
-        type: bond
-        mode: active-backup
-        ip4: "{{ eno8303_ip }}/24"
-        gw4: 10.17.5.254
-        dns4: 10.17.5.240
-        dns4_search: alrawabi.local
+      shell: |
+        nmcli connection add type bond ifname bond0 con-name bond-MGMT mode active-backup
+        nmcli connection modify bond-MGMT ipv4.addresses {{ eno8303_ip }}/24
+        nmcli connection modify bond-MGMT ipv4.gateway 10.17.5.254
+        nmcli connection modify bond-MGMT ipv4.dns 10.17.5.240
+        nmcli connection modify bond-MGMT ipv4.dns-search alrawabi.local
+        nmcli connection modify bond-MGMT ipv4.method manual
       when: bond_check.rc != 0
 
     - name: Check if eno8303-slave connection exists
-      command: nmcli connection show eno8303-slave
+      shell: nmcli connection show eno8303-slave
       register: eno8303_slave_check
       ignore_errors: yes
 
     - name: Add eno8303 to bond if not exists
-      nmcli:
-        conn_name: eno8303-slave
-        ifname: eno8303
-        type: ethernet
-        master: bond0
+      shell: nmcli connection add type ethernet ifname eno8303 con-name eno8303-slave master bond0
       when: eno8303_slave_check.rc != 0
 
     - name: Check if eno8403-slave connection exists
-      command: nmcli connection show eno8403-slave
+      shell: nmcli connection show eno8403-slave
       register: eno8403_slave_check
       ignore_errors: yes
 
     - name: Add eno8403 to bond if not exists
-      nmcli:
-        conn_name: eno8403-slave
-        ifname: eno8403
-        type: ethernet
-        master: bond0
+      shell: nmcli connection add type ethernet ifname eno8403 con-name eno8403-slave master bond0
       when: eno8403_slave_check.rc != 0
 
     - name: Bring up the bond connection
-      nmcli:
-        conn_name: bond-MGMT
-        state: up
+      shell: nmcli connection up bond-MGMT

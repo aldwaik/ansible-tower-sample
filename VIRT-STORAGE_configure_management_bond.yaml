@@ -53,3 +53,19 @@
 
     - name: Bring up the bond connection
       shell: nmcli connection up bond-MGMT
+
+    - name: Check if networking service is running
+      shell: systemctl is-active networking
+      register: networking_service
+      ignore_errors: yes
+
+    - name: Stop and disable networking service if running
+      systemd:
+        name: networking
+        state: stopped
+        enabled: no
+      when: networking_service.stdout == 'active'
+
+    - name: Reboot the server if networking service was running
+      reboot:
+      when: networking_service.stdout == 'active'

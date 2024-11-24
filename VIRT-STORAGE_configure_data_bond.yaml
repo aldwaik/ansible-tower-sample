@@ -1,0 +1,81 @@
+---
+- name: Configure additional bonds
+  hosts: all
+  become: yes
+  tasks:
+    - name: Get the last octet of the management interface IP
+      shell: |
+        ip -4 addr show bond0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | awk -F. '{print $4}'
+      register: last_octet
+
+    - name: Save the last octet to a variable
+      set_fact:
+        mgmt_last_octet: "{{ last_octet.stdout }}"
+
+    - name: Check if bond1 connection exists
+      shell: nmcli connection show bond1
+      register: bond1_check
+      ignore_errors: yes
+
+    - name: Create bond1 connection if not exists
+      shell: |
+        nmcli connection add type bond ifname bond1 con-name bond1 mode active-backup
+        nmcli connection modify bond1 bond.options "miimon=100 updelay=100"
+        nmcli connection modify bond1 ipv4.addresses 10.70.128.{{ mgmt_last_octet }}/24
+        nmcli connection modify bond1 ipv4.method manual
+      when: bond1_check.rc != 0
+
+    - name: Check if ens3f0np0-slave connection exists
+      shell: nmcli connection show ens3f0np0-slave
+      register: ens3f0np0_slave_check
+      ignore_errors: yes
+
+    - name: Add ens3f0np0 to bond1 if not exists
+      shell: nmcli connection add type ethernet ifname ens3f0np0 con-name ens3f0np0-slave master bond1
+      when: ens3f0np0_slave_check.rc != 0
+
+    - name: Check if ens6f0np0-slave connection exists
+      shell: nmcli connection show ens6f0np0-slave
+      register: ens6f0np0_slave_check
+      ignore_errors: yes
+
+    - name: Add ens6f0np0 to bond1 if not exists
+      shell: nmcli connection add type ethernet ifname ens6f0np0 con-name ens6f0np0-slave master bond1
+      when: ens6f0np0_slave_check.rc != 0
+
+    - name: Check if bond2 connection exists
+      shell: nmcli connection show bond2
+      register: bond2_check
+      ignore_errors: yes
+
+    - name: Create bond2 connection if not exists
+      shell: |
+        nmcli connection add type bond ifname bond2 con-name bond2 mode active-backup
+        nmcli connection modify bond2 bond.options "miimon=100 updelay=100"
+        nmcli connection modify bond2 ipv4.addresses 10.70.129.{{ mgmt_last_octet }}/24
+        nmcli connection modify bond2 ipv4.method manual
+      when: bond2_check.rc != 0
+
+    - name: Check if ens3f1np1-slave connection exists
+      shell: nmcli connection show ens3f1np1-slave
+      register: ens3f1np1_slave_check
+      ignore_errors: yes
+
+    - name: Add ens3f1np1 to bond2 if not exists
+      shell: nmcli connection add type ethernet ifname ens3f1np1 con-name ens3f1np1-slave master bond2
+      when: ens3f1np1_slave_check.rc != 0
+
+    - name: Check if ens6f1np1-slave connection exists
+      shell: nmcli connection show ens6f1np1-slave
+      register: ens6f1np1_slave_check
+      ignore_errors: yes
+
+    - name: Add ens6f1np1 to bond2 if not exists
+      shell: nmcli connection add type ethernet ifname ens6f1np1 con-name ens6f1np1-slave master bond2
+      when: ens6f1np1_slave_check.rc != 0
+
+    - name: Bring up the bond1 connection
+      shell: nmcli connection up bond1
+
+    - name: Bring up the bond2 connection
+      shell: nmcli connection up bond2

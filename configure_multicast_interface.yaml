@@ -9,10 +9,10 @@
     primary_encoder_interface_mc_out_p: "ens1f1np1"
     primary_encoder_interface_mc_out_s: "ens2f1np1"
 
-    secondary_encoder_interface_mc_in_p: "ens2f0np0"
-    secondary_encoder_interface_mc_in_s: "ens1f0np0"
-    secondary_encoder_interface_mc_out_p: "ens2f1np1"
-    secondary_encoder_interface_mc_out_s: "ens1f1np1"
+    secondary_encoder_interface_mc_in_p: "ens1f0np0"
+    secondary_encoder_interface_mc_in_s: "ens2f0np0"
+    secondary_encoder_interface_mc_out_p: "ens1f1np1"
+    secondary_encoder_interface_mc_out_s: "ens2f1np1"
 
     primary_encoder_subnet_mc_in_p: "10.70.5.0/24"
     primary_encoder_subnet_mc_in_s: "10.80.5.0/24"

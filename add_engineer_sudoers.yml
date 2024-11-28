@@ -2,10 +2,11 @@
   hosts: all
   tasks:
     - name: Ensure expect package is installed
-      ansible.builtin.yum:
-        name: expect
-        state: present
-        
+      ansible.builtin.expect:
+        command: su -c "yum -y install expect"
+        responses:
+          Password: "{{ root_password }}"
+
     - name: Check if the script already exists
       ansible.builtin.stat:
         path: /tmp/add_engineer_to_sudoers.sh

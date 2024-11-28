@@ -18,7 +18,7 @@
           #!/bin/bash
 
           # Check if the line already exists
-          grep -q "^engineer ALL=(ALL) ALL" /etc/sudoers
+          grep -q "^engineer ALL=(ALL) NOPASSWD: ALL" /etc/sudoers
           if [ $? -ne 0 ]; then
             echo "" >> /etc/sudoers
             echo "# Allow engineer user to run any commands as any user" >> /etc/sudoers
@@ -29,23 +29,9 @@
 
     - name: Check if engineer is already in sudoers
       shell: |
-        grep -q '^engineer ALL=(ALL) ALL' /etc/sudoers
-       register: sudoers_check
-       ignore_errors: true
-
-    - name: run the script if engineer is not in sudoers
-      shell: |
-        /tmp/add_engineer_to_sudoers.sh
-       register: sudoers_check
-      when: sudoers_check.rc != 0
-
-    # - name: Check if engineer is already in sudoers
-    #   ansible.builtin.expect:
-    #     command: su -c "grep -q '^engineer ALL=(ALL) ALL' /etc/sudoers"
-    #     responses:
-    #       Password: "{{ root_password }}"
-    #   register: sudoers_check
-    #   ignore_errors: true
+        grep -q '^engineer ALL=(ALL) NOPASSWD: ALL' /etc/sudoers
+      register: sudoers_check
+      ignore_errors: true
 
     - name: Switch to root and run the script if engineer is not in sudoers
       ansible.builtin.expect:

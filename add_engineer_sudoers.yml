@@ -2,10 +2,16 @@
   hosts: all
   tasks:
     - name: Ensure expect package is installed
-      ansible.builtin.expect:
-        command: su -c "yum -y install expect"
-        responses:
-          Password: "{{ root_password }}"
+      shell: |
+        yum -y install expect < "{{ root_password }}"
+      args:
+        executable: /bin/bash
+
+    # - name: Ensure expect package is installed
+    #   ansible.builtin.expect:
+    #     command: su -c "yum -y install expect"
+    #     responses:
+    #       Password: "{{ root_password }}"
 
     - name: Check if the script already exists
       ansible.builtin.stat:

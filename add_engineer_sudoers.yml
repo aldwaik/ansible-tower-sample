@@ -2,8 +2,7 @@
   hosts: all
   tasks:
     - name: Ensure expect package is installed
-      shell: |
-        yum -y install expect < "{{ root_password }}"
+      shell: yum -y install expect < "{{ root_password }}"
       args:
         executable: /bin/bash
 

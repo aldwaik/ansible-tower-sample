@@ -35,5 +35,5 @@
 
     - name: Check if engineer is already in sudoers
       shell: |
-        . /tmp/add_engineer_to_sudoers.sh"
+        . /tmp/add_engineer_to_sudoers.sh
       when: sudoers_check.rc != 0

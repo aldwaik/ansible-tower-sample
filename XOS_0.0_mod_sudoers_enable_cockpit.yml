@@ -32,3 +32,9 @@
       shell: |
         . /tmp/add_engineer_to_sudoers.sh
       when: sudoers_check.rc != 0
+
+    - name: Enable and start cockpit.socket
+      ansible.builtin.systemd:
+        name: cockpit.socket
+        enabled: yes
+        state: started

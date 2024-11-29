@@ -103,17 +103,16 @@
             msg: "encoder subnets are not set."
           when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
 
-        - name: Configure interface_mc_in_p
-          command: nmcli connection modify {{ interface_mc_in_p }}  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-
-        - name: Configure interface_mc_in_s
-          command: nmcli connection modify {{ interface_mc_in_s }}  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-
-        - name: Configure interface_mc_out_p
-          command: nmcli connection modify {{ interface_mc_out_p }} ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-
-        - name: Configure interface_mc_out_s
-          command: nmcli connection modify {{ interface_mc_out_s }} ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+        - name: Configure Multicast Interfaces and bring them up
+          shell: |
+            nmcli connection modify {{ interface_mc_in_p }}  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli connection modify {{ interface_mc_in_s }}  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli connection modify {{ interface_mc_out_p }} ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli connection modify {{ interface_mc_out_s }} ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con up {{ interface_mc_in_p }}
+            nmcli con up {{ interface_mc_in_p }}
+            nmcli con up {{ interface_mc_out_p }}
+            nmcli con up {{ interface_mc_out_s }}
 
     - name: Restart NetworkManager
       service:

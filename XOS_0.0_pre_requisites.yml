@@ -38,3 +38,15 @@
         name: cockpit.socket
         enabled: yes
         state: started
+
+    - name: Disable mcelog.service
+      systemd:
+        name: mcelog.service
+        enabled: no
+        state: stopped
+
+    - name: Disable NetworkManager-wait-online.service
+      systemd:
+        name: NetworkManager-wait-online.service
+        enabled: no
+        state: stopped

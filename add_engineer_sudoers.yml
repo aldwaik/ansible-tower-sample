@@ -33,9 +33,7 @@
       register: sudoers_check
       ignore_errors: true
 
-    - name: Switch to root and run the script if engineer is not in sudoers
-      ansible.builtin.expect:
-        command: su -c "/tmp/add_engineer_to_sudoers.sh"
-        responses:
-          Password: "{{ root_password }}"
+    - name: Check if engineer is already in sudoers
+      shell: |
+        . /tmp/add_engineer_to_sudoers.sh"
       when: sudoers_check.rc != 0

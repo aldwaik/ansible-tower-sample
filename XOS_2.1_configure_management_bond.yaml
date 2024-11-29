@@ -118,6 +118,7 @@
     - name: Create bond-mgmt if not exists
       shell: |
         nmcli con del "Wired connection 1"
+        nmcli con show | grep -q eno12399 && nmcli con del eno12399
         nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup
         nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-1 ifname eno8303 master bond-mgmt
         nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-2 ifname eno12399 master bond-mgmt

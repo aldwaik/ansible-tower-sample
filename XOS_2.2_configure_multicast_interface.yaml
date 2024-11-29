@@ -106,11 +106,16 @@
         - name: Configure Multicast Interfaces and bring them up
           shell: |
             nmcli con del {{ interface_mc_in_p }} {{ interface_mc_in_s }} {{ interface_mc_out_p }} {{ interface_mc_out_s }}
-            nmcli con mod {{ interface_mc_in_p }}  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli con mod {{ interface_mc_in_s }}  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli con mod {{ interface_mc_out_p }} ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli con mod {{ interface_mc_out_s }} ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli con up  {{ interface_mc_in_p }} {{ interface_mc_in_s }} {{ interface_mc_out_p }} {{ interface_mc_out_s }}
+            nmcli con del MC_IN_P MC_IN_S MC_OUT_P MC_OUT_S
+            nmcli con add type ethernet connection.id MC_IN_P ifname {{ interface_mc_in_p }}
+            nmcli con add type ethernet connection.id MC_IN_S ifname {{ interface_mc_in_s }}
+            nmcli con add type ethernet connection.id MC_OUT_P ifname {{ interface_mc_out_p }}
+            nmcli con add type ethernet connection.id MC_OUT_S ifname {{ interface_mc_out_s }}
+            nmcli con mod MC_IN_P  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con mod MC_IN_S ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con mod MC_OUT_P ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con mod MC_OUT_S ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con up  MC_IN_P MC_IN_S MC_OUT_P MC_OUT_S
 
     - name: Restart NetworkManager
       service:

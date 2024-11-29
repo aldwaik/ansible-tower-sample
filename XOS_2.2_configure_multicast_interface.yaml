@@ -105,14 +105,12 @@
 
         - name: Configure Multicast Interfaces and bring them up
           shell: |
-            nmcli connection modify {{ interface_mc_in_p }}  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli connection modify {{ interface_mc_in_s }}  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli connection modify {{ interface_mc_out_p }} ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli connection modify {{ interface_mc_out_s }} ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli con up {{ interface_mc_in_p }}
-            nmcli con up {{ interface_mc_in_p }}
-            nmcli con up {{ interface_mc_out_p }}
-            nmcli con up {{ interface_mc_out_s }}
+            nmcli con del {{ interface_mc_in_p }} {{ interface_mc_in_s }} {{ interface_mc_out_p }} {{ interface_mc_out_s }}
+            nmcli con mod {{ interface_mc_in_p }}  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con mod {{ interface_mc_in_s }}  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con mod {{ interface_mc_out_p }} ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con mod {{ interface_mc_out_s }} ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+            nmcli con up  {{ interface_mc_in_p }} {{ interface_mc_in_s }} {{ interface_mc_out_p }} {{ interface_mc_out_s }}
 
     - name: Restart NetworkManager
       service:

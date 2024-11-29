@@ -33,7 +33,7 @@
       register: sudoers_check
       ignore_errors: true
 
-    - name: Check if engineer is already in sudoers
+    - name: Run the script
       shell: |
         . /tmp/add_engineer_to_sudoers.sh
       when: sudoers_check.rc != 0

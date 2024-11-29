@@ -18,10 +18,10 @@
         dest: /etc/yum.repos.d/docker-ce.repo
       when: not repo_file.stat.exists
 
-    - name: Update all packages
-      ansible.builtin.dnf:
-        name: '*'
-        state: latest
+    # - name: Update all packages
+    #   ansible.builtin.dnf:
+    #     name: '*'
+    #     state: latest
 
     # - name: Upgrade all packages
     #   ansible.builtin.dnf:

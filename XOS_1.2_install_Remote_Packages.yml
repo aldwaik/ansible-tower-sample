@@ -21,6 +21,8 @@
           - rsyslog
           - python3
           - htop
+          - glances
+          - nmon
         state: present
 
     - name: Install Docker packages

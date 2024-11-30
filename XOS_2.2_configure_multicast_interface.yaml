@@ -133,9 +133,9 @@
     - name: Configure Multicast Interfaces and bring them up
       shell: |
         nmcli con add type ethernet ifname {{ interface_mc_in_p }} con-name MC_IN_P
-        nmcli con add type ethernet ifname {{ interface_mc_in_s }} con-name MC_IN_P
-        nmcli con add type ethernet ifname {{ interface_mc_out_p }} con-name MC_IN_P
-        nmcli con add type ethernet ifname {{ interface_mc_out_s }} con-name MC_IN_P
+        nmcli con add type ethernet ifname {{ interface_mc_in_s }} con-name MC_IN_S
+        nmcli con add type ethernet ifname {{ interface_mc_out_p }} con-name MC_OUT_P
+        nmcli con add type ethernet ifname {{ interface_mc_out_s }} con-name MC_OUT_S
         nmcli con mod MC_IN_P  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24  ipv4.method manual ipv6.method disabled
         nmcli con mod MC_IN_S  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24  ipv4.method manual ipv6.method disabled
         nmcli con mod MC_OUT_P ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled

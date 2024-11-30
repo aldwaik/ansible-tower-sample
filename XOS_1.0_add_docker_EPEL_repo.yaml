@@ -1,4 +1,4 @@
-- name: Add docker repo and update repo package list
+- name: Add docker and EPEL release repos
   hosts: all
   become: yes
   tasks:

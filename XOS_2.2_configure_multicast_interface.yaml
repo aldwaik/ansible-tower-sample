@@ -105,15 +105,14 @@
 
         - name: Delete old multicast interfaces connections
           shell: |
-            nmcli con show | grep -q {{ interface_mc_in_p }} && nmcli con del {{ interface_mc_in_p }}
-            nmcli con show | grep -q {{ interface_mc_in_s }} && nmcli con del {{ interface_mc_in_s }}
-            nmcli con show | grep -q {{ interface_mc_out_p }} && nmcli con del {{ interface_mc_out_p }}
-            nmcli con show | grep -q {{ interface_mc_out_s }} && nmcli con del {{ interface_mc_out_s }}
-            nmcli con show | grep -q MC_IN_P && nmcli con del MC_IN_P
-            nmcli con show | grep -q MC_IN_S && nmcli con del MC_IN_S
-            nmcli con show | grep -q MC_OUT_P && nmcli con del MC_OUT_P
-            nmcli con show | grep -q MC_OUT_S && nmcli con del MC_OUT_S
-
+            nmcli con show {{ interface_mc_in_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_p }}
+            nmcli con show {{ interface_mc_in_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_s }}
+            nmcli con show {{ interface_mc_out_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_p }}
+            nmcli con show {{ interface_mc_out_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_s }}
+            nmcli con show MC_IN_P > /dev/null 2>&1 && nmcli con delete MC_IN_P
+            nmcli con show MC_IN_S > /dev/null 2>&1 && nmcli con delete MC_IN_S
+            nmcli con show MC_OUT_P > /dev/null 2>&1 && nmcli con delete MC_OUT_P
+            nmcli con show MC_OUT_S > /dev/null 2>&1 && nmcli con delete MC_OUT_S
         - name: Configure Multicast Interfaces and bring them up
           shell: |
             nmcli con add type ethernet connection.id MC_IN_P  ifname {{ interface_mc_in_p }}

@@ -56,77 +56,76 @@
       debug:
         msg: "Last octet of management interface IP is {{ last_octet }}"
 
-    - name: Determine subnet and configure interfaces
-      block:
-        - name: Set primary encoder subnets
-          set_fact:
-            subnet_mc_in_p: "{{ primary_encoder_subnet_mc_in_p | regex_replace('.0/.*', '') }}"
-            subnet_mc_in_s: "{{ primary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
-            subnet_mc_out_p: "{{ primary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
-            subnet_mc_out_s: "{{ primary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
-            interface_mc_in_p: "{{ primary_encoder_interface_mc_in_p }}"
-            interface_mc_in_s: "{{ primary_encoder_interface_mc_in_s }}"
-            interface_mc_out_p: "{{ primary_encoder_interface_mc_out_p }}"
-            interface_mc_out_s: "{{ primary_encoder_interface_mc_out_s }}"
-          when: mgmt_ip_config.stdout.find('10.17.11.') != -1
+    - name: Set primary encoder subnets
+      set_fact:
+        subnet_mc_in_p: "{{ primary_encoder_subnet_mc_in_p | regex_replace('.0/.*', '') }}"
+        subnet_mc_in_s: "{{ primary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
+        subnet_mc_out_p: "{{ primary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
+        subnet_mc_out_s: "{{ primary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
+        interface_mc_in_p: "{{ primary_encoder_interface_mc_in_p }}"
+        interface_mc_in_s: "{{ primary_encoder_interface_mc_in_s }}"
+        interface_mc_out_p: "{{ primary_encoder_interface_mc_out_p }}"
+        interface_mc_out_s: "{{ primary_encoder_interface_mc_out_s }}"
+      when: mgmt_ip_config.stdout.find('10.17.11.') != -1
 
-        - name: Set secondary encoder subnets
-          set_fact:
-            subnet_mc_in_p: "{{ secondary_encoder_subnet_mc_in_p | regex_replace('.0/.*', '') }}"
-            subnet_mc_in_s: "{{ secondary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
-            subnet_mc_out_p: "{{ secondary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
-            subnet_mc_out_s: "{{ secondary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
-            interface_mc_in_p: "{{ secondary_encoder_interface_mc_in_p }}"
-            interface_mc_in_s: "{{ secondary_encoder_interface_mc_in_s }}"
-            interface_mc_out_p: "{{ secondary_encoder_interface_mc_out_p }}"
-            interface_mc_out_s: "{{ secondary_encoder_interface_mc_out_s }}"
-          when: mgmt_ip_config.stdout.find('10.17.12.') != -1
+    - name: Set secondary encoder subnets
+      set_fact:
+        subnet_mc_in_p: "{{ secondary_encoder_subnet_mc_in_p | regex_replace('.0/.*', '') }}"
+        subnet_mc_in_s: "{{ secondary_encoder_subnet_mc_in_s | regex_replace('.0/.*', '') }}"
+        subnet_mc_out_p: "{{ secondary_encoder_subnet_mc_out_p | regex_replace('.0/.*', '') }}"
+        subnet_mc_out_s: "{{ secondary_encoder_subnet_mc_out_s | regex_replace('.0/.*', '') }}"
+        interface_mc_in_p: "{{ secondary_encoder_interface_mc_in_p }}"
+        interface_mc_in_s: "{{ secondary_encoder_interface_mc_in_s }}"
+        interface_mc_out_p: "{{ secondary_encoder_interface_mc_out_p }}"
+        interface_mc_out_s: "{{ secondary_encoder_interface_mc_out_s }}"
+      when: mgmt_ip_config.stdout.find('10.17.12.') != -1
 
-        - name: Check if multicast interfaces are available
-          command: ip link show {{ item }}
-          register: result_mc
-          failed_when: result_mc.rc != 0
-          with_items:
-            - "{{ interface_mc_in_p }}"
-            - "{{ interface_mc_in_s }}"
-            - "{{ interface_mc_out_p }}"
-            - "{{ interface_mc_out_s }}"
-          ignore_errors: yes
+    - name: Check if multicast interfaces are available
+      command: ip link show {{ item }}
+      register: result_mc
+      failed_when: result_mc.rc != 0
+      with_items:
+        - "{{ interface_mc_in_p }}"
+        - "{{ interface_mc_in_s }}"
+        - "{{ interface_mc_out_p }}"
+        - "{{ interface_mc_out_s }}"
+      ignore_errors: yes
 
-        - name: Fail if multicast interface/s not available
-          fail:
-            msg: "Multicast interface/s not available."
-          when: result_mc.results | selectattr('rc', 'ne', 0) | list | length > 0
+    - name: Fail if multicast interface/s not available
+      fail:
+        msg: "Multicast interface/s not available."
+      when: result_mc.results | selectattr('rc', 'ne', 0) | list | length > 0
 
-        - name: Fail if encoder subnets are not set
-          fail:
-            msg: "encoder subnets are not set."
-          when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
+    - name: Fail if encoder subnets are not set
+      fail:
+        msg: "encoder subnets are not set."
+      when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
 
-        - name: Delete old multicast interfaces connections
-          shell: |
-            nmcli con show {{ interface_mc_in_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_p }}
-            nmcli con show {{ interface_mc_in_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_s }}
-            nmcli con show {{ interface_mc_out_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_p }}
-            nmcli con show {{ interface_mc_out_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_s }}
-            nmcli con show MC_IN_P > /dev/null 2>&1 && nmcli con delete MC_IN_P
-            nmcli con show MC_IN_S > /dev/null 2>&1 && nmcli con delete MC_IN_S
-            nmcli con show MC_OUT_P > /dev/null 2>&1 && nmcli con delete MC_OUT_P
-            nmcli con show MC_OUT_S > /dev/null 2>&1 && nmcli con delete MC_OUT_S
-        - name: Configure Multicast Interfaces and bring them up
-          shell: |
-            nmcli con add type ethernet connection.id MC_IN_P  ifname {{ interface_mc_in_p }}
-            nmcli con add type ethernet connection.id MC_IN_S  ifname {{ interface_mc_in_s }}
-            nmcli con add type ethernet connection.id MC_OUT_P ifname {{ interface_mc_out_p }}
-            nmcli con add type ethernet connection.id MC_OUT_S ifname {{ interface_mc_out_s }}
-            nmcli con mod MC_IN_P  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24  ipv4.method manual ipv6.method disabled
-            nmcli con mod MC_IN_S  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24  ipv4.method manual ipv6.method disabled
-            nmcli con mod MC_OUT_P ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli con mod MC_OUT_S ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
-            nmcli con up  MC_IN_P
-            nmcli con up  MC_IN_S
-            nmcli con up  MC_OUT_P
-            nmcli con up  MC_OUT_S
+    - name: Delete old multicast interfaces connections
+      shell: |
+        nmcli con show {{ interface_mc_in_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_p }}
+        nmcli con show {{ interface_mc_in_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_s }}
+        nmcli con show {{ interface_mc_out_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_p }}
+        nmcli con show {{ interface_mc_out_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_s }}
+        nmcli con show MC_IN_P > /dev/null 2>&1 && nmcli con delete MC_IN_P
+        nmcli con show MC_IN_S > /dev/null 2>&1 && nmcli con delete MC_IN_S
+        nmcli con show MC_OUT_P > /dev/null 2>&1 && nmcli con delete MC_OUT_P
+        nmcli con show MC_OUT_S > /dev/null 2>&1 && nmcli con delete MC_OUT_S
+    - name: Configure Multicast Interfaces and bring them up
+      shell: |
+        nmcli con add type ethernet connection.id MC_IN_P  ifname {{ interface_mc_in_p }}
+        nmcli con add type ethernet connection.id MC_IN_S  ifname {{ interface_mc_in_s }}
+        nmcli con add type ethernet connection.id MC_OUT_P ifname {{ interface_mc_out_p }}
+        nmcli con add type ethernet connection.id MC_OUT_S ifname {{ interface_mc_out_s }}
+        nmcli con mod MC_IN_P  ipv4.addresses {{ subnet_mc_in_p }}.{{ last_octet }}/24  ipv4.method manual ipv6.method disabled
+        nmcli con mod MC_IN_S  ipv4.addresses {{ subnet_mc_in_s }}.{{ last_octet }}/24  ipv4.method manual ipv6.method disabled
+        nmcli con mod MC_OUT_P ipv4.addresses {{ subnet_mc_out_p }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+        nmcli con mod MC_OUT_S ipv4.addresses {{ subnet_mc_out_s }}.{{ last_octet }}/24 ipv4.method manual ipv6.method disabled
+        nmcli con up  MC_IN_P
+        nmcli con up  MC_IN_S
+        nmcli con up  MC_OUT_P
+        nmcli con up  MC_OUT_S
+      ignore_errors: yes
 
     - name: Restart NetworkManager
       service:

@@ -98,7 +98,7 @@
 
     - name: Fail if encoder subnets are not set
       fail:
-        msg: "encoder subnets are not set."
+        msg: "Encoder subnets are not set."
       when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
 
     - name: Delete old multicast interfaces connections
@@ -118,9 +118,11 @@
       register: unassigned_connections
       ignore_errors: yes
       failed_when: false
+
     - name: Debug the unassigned connections
       debug:
         msg: "Unassigned connections: {{ unassigned_connections.stdout_lines }}"
+
     - name: Delete unassigned connections
       shell: nmcli con delete "{{ item }}"
       with_items: "{{ unassigned_connections.stdout_lines }}"

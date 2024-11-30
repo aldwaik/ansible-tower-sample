@@ -111,6 +111,8 @@
         nmcli con show MC_IN_S > /dev/null 2>&1 && nmcli con delete MC_IN_S
         nmcli con show MC_OUT_P > /dev/null 2>&1 && nmcli con delete MC_OUT_P
         nmcli con show MC_OUT_S > /dev/null 2>&1 && nmcli con delete MC_OUT_S
+      ignore_errors: yes
+      
     - name: Configure Multicast Interfaces and bring them up
       shell: |
         nmcli con add type ethernet connection.id MC_IN_P  ifname {{ interface_mc_in_p }}
@@ -125,7 +127,6 @@
         nmcli con up  MC_IN_S
         nmcli con up  MC_OUT_P
         nmcli con up  MC_OUT_S
-      ignore_errors: yes
 
     - name: Restart NetworkManager
       service:

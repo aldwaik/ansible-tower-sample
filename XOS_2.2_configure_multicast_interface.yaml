@@ -113,7 +113,7 @@
 
     - name: Debug the deleted connections
       debug:
-        msg: "Unassigned connections: {{ deleted_connections.stdout_lines }}"
+        msg: "Deleted connections: {{ deleted_connections.stdout_lines }}"
 
     - name: Configure Multicast Interfaces and bring them up
       shell: |
@@ -129,6 +129,11 @@
         nmcli con up  MC_IN_S
         nmcli con up  MC_OUT_P
         nmcli con up  MC_OUT_S
+      register: created_connections
+
+    - name: Debug the Created connections
+      debug:
+        msg: "Created connections: {{ created_connections.stdout_lines }}"
 
     - name: Restart NetworkManager
       service:

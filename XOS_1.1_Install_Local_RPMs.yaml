@@ -1,20 +1,46 @@
 ---
-- name: Download, extract, and install RPM files
+- name: Download and install Docker CE on Rocky Linux 8
   hosts: all
   become: yes
+
   tasks:
-    - name: Download the tar.gz file
+    - name: Ensure /tmp directory exists
+      file:
+        path: /tmp
+        state: directory
+
+    - name: Download required packages
       get_url:
-        url: "http://10.17.13.33/Harmonic/Rocky_Linux_8.8/XosRockyDependencies.tar.gz"
-        dest: "/tmp/XosRockyDependencies.tar.gz"
+        url: "{{ item }}"
+        dest: /tmp/
+      loop:
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/containerd.io-1.6.32-3.1.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/docker-buildx-plugin-0.14.0-1.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/docker-compose-plugin-2.6.0-3.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/container-selinux-2.229.0-2.module+el8.10.0+1896+b18fa106.noarch.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/fuse-common-3.3.0-19.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/fuse3-libs-3.3.0-19.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/fuse3-3.3.0-19.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/fuse-overlayfs-1.13-1.module+el8.10.0+1896+b18fa106.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/libcgroup-0.41-19.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/libslirp-4.4.0-2.module+el8.10.0+1896+b18fa106.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/slirp4netns-1.2.3-1.module+el8.10.0+1896+b18fa106.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/docker-ce-rootless-extras-26.1.3-1.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/docker-ce-26.1.3-1.el8.x86_64.rpm
 
-    - name: Extract the tar.gz file
-      unarchive:
-        src: "/tmp/XosRockyDependencies.tar.gz"
-        dest: "/tmp/"
-        remote_src: yes
-
-    - name: Install all RPM files
-      yum:
-        name: "/tmp/XosRockyDependencies/*.rpm"
-        state: present
+    - name: Install downloaded packages
+      command: dnf install -y /tmp/{{ item }}
+      loop:
+        - containerd.io-1.6.32-3.1.el8.x86_64.rpm
+        - docker-buildx-plugin-0.14.0-1.el8.x86_64.rpm
+        - docker-compose-plugin-2.6.0-3.el8.x86_64.rpm
+        - container-selinux-2.229.0-2.module+el8.10.0+1896+b18fa106.noarch.rpm
+        - fuse-common-3.3.0-19.el8.x86_64.rpm
+        - fuse3-libs-3.3.0-19.el8.x86_64.rpm
+        - fuse3-3.3.0-19.el8.x86_64.rpm
+        - fuse-overlayfs-1.13-1.module+el8.10.0+1896+b18fa106.x86_64.rpm
+        - libcgroup-0.41-19.el8.x86_64.rpm
+        - libslirp-4.4.0-2.module+el8.10.0+1896+b18fa106.x86_64.rpm
+        - slirp4netns-1.2.3-1.module+el8.10.0+1896+b18fa106.x86_64.rpm
+        - docker-ce-26.1.3-1.el8.x86_64.rpm
+        - docker-ce-rootless-extras-26.1.3-1.el8.x86_64.rpm

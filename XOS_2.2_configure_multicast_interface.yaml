@@ -107,7 +107,7 @@
         nmcli -t -f NAME con show | grep -E "^Wired connection" | xargs -I {} nmcli con delete "{}"
         nmcli -t -f NAME con show | grep -E "^MC_" | xargs -I {} nmcli con delete "{}"
         nmcli -t -f NAME con show | grep -E "^ens" | xargs -I {} nmcli con delete "{}"
-      register: deleted connections
+      register: deleted_connections
       ignore_errors: yes
       failed_when: false
 

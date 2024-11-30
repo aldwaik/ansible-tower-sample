@@ -25,14 +25,6 @@
           - nmon
         state: present
 
-    - name: Install Docker packages
-      dnf:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-        state: present
-
     - name: Start and enable Docker service
       systemd:
         name: docker

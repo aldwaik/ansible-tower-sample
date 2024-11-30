@@ -114,7 +114,8 @@
       ignore_errors: yes
 
     - name: Get the list of all connections not assigned to a device
-      shell: nmcli -t -f NAME,DEVICE con show | grep -E ":$" | awk -F: '{print $1}'
+      shell: |
+        nmcli -t -f NAME,DEVICE con show | grep -E ":$" | awk -F: '{print $1}'
       register: unassigned_connections
       ignore_errors: yes
       failed_when: false

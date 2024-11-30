@@ -101,34 +101,19 @@
         msg: "Encoder subnets are not set."
       when: subnet_mc_in_p is not defined or subnet_mc_in_s is not defined or subnet_mc_out_p is not defined or subnet_mc_out_s is not defined
 
-    - name: Delete old multicast interfaces connections
+    - name: Delete old connections
       shell: |
-        nmcli con show {{ interface_mc_in_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_p }}
-        nmcli con show {{ interface_mc_in_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_s }}
-        nmcli con show {{ interface_mc_out_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_p }}
-        nmcli con show {{ interface_mc_out_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_s }}
-        nmcli con delete MC_IN_P
-        nmcli con delete MC_IN_S
-        nmcli con delete MC_OUT_P
-        nmcli con delete MC_OUT_S
-      ignore_errors: yes
-
-    - name: Get the list of all connections not assigned to a device
-      shell: |
-        nmcli -t -f NAME,DEVICE con show | grep -E ":$" | awk -F: '{print $1}'
-      register: unassigned_connections
+        nmcli -t -f NAME,DEVICE con show | awk -F: '$2 == "" {print $1}' | xargs -I {} nmcli con delete "{}"
+        nmcli -t -f NAME con show | grep -E "^Wired connection" | xargs -I {} nmcli con delete "{}"
+        nmcli -t -f NAME con show | grep -E "^MC_" | xargs -I {} nmcli con delete "{}"
+        nmcli -t -f NAME con show | grep -E "^ens" | xargs -I {} nmcli con delete "{}"
+      register: deleted connections
       ignore_errors: yes
       failed_when: false
 
-    - name: Debug the unassigned connections
+    - name: Debug the deleted connections
       debug:
-        msg: "Unassigned connections: {{ unassigned_connections.stdout_lines }}"
-
-    - name: Delete unassigned connections
-      shell: nmcli con delete "{{ item }}"
-      with_items: "{{ unassigned_connections.stdout_lines }}"
-      when: unassigned_connections.stdout_lines | length > 0
-      ignore_errors: yes
+        msg: "Unassigned connections: {{ deleted_connections.stdout_lines }}"
 
     - name: Configure Multicast Interfaces and bring them up
       shell: |

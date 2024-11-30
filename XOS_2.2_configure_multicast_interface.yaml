@@ -107,10 +107,10 @@
         nmcli con show {{ interface_mc_in_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_in_s }}
         nmcli con show {{ interface_mc_out_p }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_p }}
         nmcli con show {{ interface_mc_out_s }} > /dev/null 2>&1 && nmcli con delete {{ interface_mc_out_s }}
-        nmcli con show MC_IN_P > /dev/null 2>&1 && nmcli con delete MC_IN_P
-        nmcli con show MC_IN_S > /dev/null 2>&1 && nmcli con delete MC_IN_S
-        nmcli con show MC_OUT_P > /dev/null 2>&1 && nmcli con delete MC_OUT_P
-        nmcli con show MC_OUT_S > /dev/null 2>&1 && nmcli con delete MC_OUT_S
+        nmcli con delete MC_IN_P
+        nmcli con delete MC_IN_S
+        nmcli con delete MC_OUT_P
+        nmcli con delete MC_OUT_S
       ignore_errors: yes
 
     - name: Get the list of all connections not assigned to a device

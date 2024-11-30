@@ -112,7 +112,21 @@
         nmcli con show MC_OUT_P > /dev/null 2>&1 && nmcli con delete MC_OUT_P
         nmcli con show MC_OUT_S > /dev/null 2>&1 && nmcli con delete MC_OUT_S
       ignore_errors: yes
-      
+
+    - name: Get the list of all connections not assigned to a device
+      shell: nmcli -t -f NAME,DEVICE con show | grep -E ":$" | awk -F: '{print $1}'
+      register: unassigned_connections
+      ignore_errors: yes
+      failed_when: false
+    - name: Debug the unassigned connections
+      debug:
+        msg: "Unassigned connections: {{ unassigned_connections.stdout_lines }}"
+    - name: Delete unassigned connections
+      shell: nmcli con delete "{{ item }}"
+      with_items: "{{ unassigned_connections.stdout_lines }}"
+      when: unassigned_connections.stdout_lines | length > 0
+      ignore_errors: yes
+
     - name: Configure Multicast Interfaces and bring them up
       shell: |
         nmcli con add type ethernet connection.id MC_IN_P  ifname {{ interface_mc_in_p }}

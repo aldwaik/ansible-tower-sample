@@ -9,6 +9,11 @@
         path: /tmp
         state: directory
 
+    - name: Ensure /opt/harmonic/dist-files directory exists
+      file:
+        path: /opt/harmonic/dist-files
+        state: directory
+
     - name: Download vos RPM
       get_url:
         url: "{{ item }}"

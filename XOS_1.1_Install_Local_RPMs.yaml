@@ -1,5 +1,5 @@
 ---
-- name: Download and install Docker CE on Rocky Linux 8
+- name: Download VOS, Docker and Python RMPs and install Docker and Python
   hosts: all
   become: yes
 
@@ -8,6 +8,13 @@
       file:
         path: /tmp
         state: directory
+
+    - name: Download vos RPM
+      get_url:
+        url: "{{ item }}"
+        dest:  /opt/harmonic/dist-files/
+      loop:
+        - http://10.17.13.33/Harmonic/VOS_1.25.1.0.137/vos-flex-1.25.1.0.137.rpm
 
     - name: Download required packages
       get_url:
@@ -27,6 +34,9 @@
         - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/slirp4netns-1.2.3-1.module+el8.10.0+1896+b18fa106.x86_64.rpm
         - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/docker-ce-rootless-extras-26.1.3-1.el8.x86_64.rpm
         - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/docker-ce-26.1.3-1.el8.x86_64.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/python3-pip-9.0.3-24.el8.rocky.0.noarch.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/python3-setuptools-39.2.0-8.el8_10.noarch.rpm
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/python36-3.6.8-39.module+el8.10.0+1592+61442852.x86_64
 
     - name: Install downloaded packages
       command: dnf install -y /tmp/{{ item }}
@@ -44,3 +54,6 @@
         - slirp4netns-1.2.3-1.module+el8.10.0+1896+b18fa106.x86_64.rpm
         - docker-ce-26.1.3-1.el8.x86_64.rpm
         - docker-ce-rootless-extras-26.1.3-1.el8.x86_64.rpm
+        - python3-pip-9.0.3-24.el8.rocky.0.noarch.rpm
+        - python3-setuptools-39.2.0-8.el8_10.noarch.rpm
+        - python36-3.6.8-39.module+el8.10.0+1592+61442852.x86_64.rpm

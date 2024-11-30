@@ -1,14 +1,10 @@
 ---
-- name: Download VOS, Docker and Python RMPs and install Docker and Python
+# Download task to run on one server at a time 
+- name: Download vos RPM on one server at a time
   hosts: all
   become: yes
-
-  tasks:
-    - name: Ensure /tmp directory exists
-      file:
-        path: /tmp
-        state: directory
-
+  serial: 1 
+  tasks: 
     - name: Ensure /opt/harmonic/dist-files directory exists
       file:
         path: /opt/harmonic/dist-files
@@ -17,9 +13,19 @@
     - name: Download vos RPM
       get_url:
         url: "{{ item }}"
-        dest:  /opt/harmonic/dist-files/
+        dest: /opt/harmonic/dist-files/
       loop:
         - http://10.17.13.33/Harmonic/VOS_1.25.1.0.137/vos-flex-1.25.1.0.137.rpm
+
+- name: Download Docker and Python RMPs and install Docker and Python
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Ensure /tmp directory exists
+      file:
+        path: /tmp
+        state: directory
 
     - name: Download required packages
       get_url:
@@ -41,7 +47,7 @@
         - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/docker-ce-26.1.3-1.el8.x86_64.rpm
         - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/python3-pip-9.0.3-24.el8.rocky.0.noarch.rpm
         - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/python3-setuptools-39.2.0-8.el8_10.noarch.rpm
-        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/python36-3.6.8-39.module+el8.10.0+1592+61442852.x86_64
+        - http://10.17.13.33/Harmonic/Rocky_Linux_8.8/Packages/python36-3.6.8-39.module+el8.10.0+1592+61442852.x86_64.rpm
 
     - name: Install downloaded packages
       command: dnf install -y /tmp/{{ item }}

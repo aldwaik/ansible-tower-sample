@@ -9,7 +9,9 @@
       shell: |
         nmcli dev status | grep bond-mgmt
       register: bond_mgmt_check
-
+      ignore_errors: yes
+      failed_when: false
+      
     - name: Remove 'KS-RHEL94' line from hostname fike if detected
       lineinfile:
         path: /etc/hostname

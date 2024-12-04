@@ -1,110 +1,71 @@
 ---
-- name: Configure Management Bond Interface on Debian 12
+- name: Configure network interfaces
   hosts: all
   become: yes
   tasks:
-    - name: Install required packages
-      apt:
-        name:
-          - ifenslave
-          - bridge-utils
-        state: present
-        update_cache: yes
-
-    - name: Get current IP configuration from eno8303
+    - name: Get the IP address of eno8303
       shell: |
-        ip_addr=$(ip addr show eno8303 | grep 'inet ' | awk '{print $2}')
-        gateway=$(ip route | grep default | grep eno8303 | awk '{print $3}')
-        subnet=$(ip route | grep -v default | grep eno8303 | grep -v 169.254 | awk '{print $1}')
-        nameserver=$(grep nameserver /etc/resolv.conf | head -1 | awk '{print $2}')
-        echo "IP_ADDR=${ip_addr}"
-        echo "GATEWAY=${gateway}"
-        echo "SUBNET=${subnet}"
-        echo "NAMESERVER=${nameserver}"
-      register: network_info
-      changed_when: false
+        ip -4 addr show eno8303 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
+      register: ip_address
 
-    - name: Set network variables
+    - name: Save the IP address to a variable
       set_fact:
-        current_ip: "{{ network_info.stdout_lines | select('match', '^IP_ADDR=.*') | first | regex_replace('^IP_ADDR=', '') }}"
-        current_gateway: "{{ network_info.stdout_lines | select('match', '^GATEWAY=.*') | first | regex_replace('^GATEWAY=', '') }}"
-        current_subnet: "{{ network_info.stdout_lines | select('match', '^SUBNET=.*') | first | regex_replace('^SUBNET=', '') }}"
-        current_nameserver: "{{ network_info.stdout_lines | select('match', '^NAMESERVER=.*') | first | regex_replace('^NAMESERVER=', '') }}"
+        eno8303_ip: "{{ ip_address.stdout }}"
 
-    - name: Load bonding module
-      modprobe:
-        name: bonding
-        state: present
-
-    - name: Ensure bonding module loads on boot
+    - name: Remove eno8303 configuration from /etc/network/interfaces
       lineinfile:
-        path: /etc/modules
-        line: bonding
-        state: present
-        create: yes
+        path: /etc/network/interfaces
+        regexp: '^(iface|allow-hotplug) eno8303'
+        state: absent
 
-    - name: Configure network interfaces
-      template:
-        src: interfaces.j2
-        dest: /etc/network/interfaces
-        backup: yes
-      notify: restart networking
+    - name: Check if bond-MGMT connection exists
+      shell: nmcli connection show bond-MGMT
+      register: bond_check
+      ignore_errors: yes
 
-    - name: Disable IPv6
-      lineinfile:
-        path: /etc/sysctl.conf
-        line: "{{ item }}"
-        state: present
-      with_items:
-        - "net.ipv6.conf.all.disable_ipv6 = 1"
-        - "net.ipv6.conf.default.disable_ipv6 = 1"
-        - "net.ipv6.conf.lo.disable_ipv6 = 1"
+    - name: Create bond connection if not exists
+      shell: |
+        nmcli connection add type bond ifname bond0 con-name bond-MGMT mode active-backup
+        nmcli connection modify bond-MGMT ipv4.addresses {{ eno8303_ip }}/24
+        nmcli connection modify bond-MGMT ipv4.gateway 10.17.5.254
+        nmcli connection modify bond-MGMT ipv4.dns 10.17.5.240
+        nmcli connection modify bond-MGMT ipv4.dns-search alrawabi.local
+        nmcli connection modify bond-MGMT ipv4.method manual
+      when: bond_check.rc != 0
 
-    - name: Apply sysctl changes
-      command: sysctl -p
-      changed_when: false
+    - name: Check if eno8303-slave connection exists
+      shell: nmcli connection show eno8303-slave
+      register: eno8303_slave_check
+      ignore_errors: yes
 
-  handlers:
-    - name: restart networking
-      service:
+    - name: Add eno8303 to bond if not exists
+      shell: nmcli connection add type ethernet ifname eno8303 con-name eno8303-slave master bond0
+      when: eno8303_slave_check.rc != 0
+
+    - name: Check if eno8403-slave connection exists
+      shell: nmcli connection show eno8403-slave
+      register: eno8403_slave_check
+      ignore_errors: yes
+
+    - name: Add eno8403 to bond if not exists
+      shell: nmcli connection add type ethernet ifname eno8403 con-name eno8403-slave master bond0
+      when: eno8403_slave_check.rc != 0
+
+    - name: Bring up the bond connection
+      shell: nmcli connection up bond-MGMT
+
+    - name: Check if networking service is running
+      shell: systemctl is-active networking
+      register: networking_service
+      ignore_errors: yes
+
+    - name: Stop and disable networking service if running
+      systemd:
         name: networking
-        state: restarted
+        state: stopped
+        enabled: no
+      when: networking_service.stdout == 'active'
 
-  templates:
-    - name: interfaces.j2
-      content: |
-        # This file describes the network interfaces available on your system
-        # and how to activate them. For more information, see interfaces(5).
-        
-        source /etc/network/interfaces.d/*
-        
-        # The loopback network interface
-        auto lo
-        iface lo inet loopback
-        
-        # Primary interface
-        auto eno8303
-        iface eno8303 inet manual
-            bond-master bond-MGMT
-        
-        # Secondary interface
-        auto eno8403
-        iface eno8403 inet manual
-            bond-master bond-MGMT
-        
-        # Bond interface
-        auto bond-MGMT
-        iface bond-MGMT inet static
-            address {{ current_ip }}
-            netmask {{ current_subnet | regex_replace('^.*/', '') | ipaddr('netmask') }}
-            gateway {{ current_gateway }}
-            dns-nameservers {{ current_nameserver }}
-            bond-mode active-backup
-            bond-miimon 100
-            bond-updelay 100
-            bond-slaves eno8303 eno8403
-            bond-primary eno8303
-            post-up ip link set bond-MGMT up
-            post-up ip link set eno8303 up
-            post-up ip link set eno8403 up
-            bond-xmit-hash-policy layer2
+    - name: Reboot the server if networking service was running
+      reboot:
+      when: networking_service.stdout == 'active'

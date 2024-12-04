@@ -9,7 +9,9 @@
       shell: |
         nmcli dev status | grep bond-mgmt
       register: bond_mgmt_check
-
+      ignore_errors: yes
+      failed_when: false
+      
     - name: Remove 'KS-RHEL94' line from hostname fike if detected
       lineinfile:
         path: /etc/hostname
@@ -88,24 +90,18 @@
       register: bond_mgmt_check
       failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
 
-    - name: delete "eno8303"
+    - name: Create and configure bond-mgmt if not exists
       shell: |
-        nmcli con del "eno8303"
-      args:
-        executable: /bin/bash
+        if nmcli con show eno8303 > /dev/null 2>&1; then
+          nmcli con del "eno8303"
+        fi
 
-    - name: Create bond-mgmt if not exists
-      shell: |
-        nmcli con del "eno8303"
-        nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup
-        nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-1 ifname eno8303 master bond-mgmt
-        nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-2 ifname eno8403 master bond-mgmt
-      when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout == ""
-      args:
-        executable: /bin/bash
+        if ! nmcli con show bond-mgmt > /dev/null 2>&1; then
+          nmcli con add type bond connection.id bond-mgmt ifname bond-mgmt mode active-backup
+          nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-1 ifname eno8303 master bond-mgmt
+          nmcli con add type ethernet slave-type bond connection.id bond-mgmt-interface-2 ifname eno8403 master bond-mgmt
+        fi
 
-    - name: Configure bond-mgmt
-      shell: |
         nmcli con mod eno8303 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
         nmcli con mod eno8403 ipv4.method disabled ipv6.method disabled ipv4.dhcp-timeout 0 ipv6.dhcp-timeout 0 ipv6.addr-gen-mode eui64 ipv4.dhcp-vendor-class-identifier ''
         nmcli con mod bond-mgmt bond.options "primary=eno8303,mode=active-backup,miimon=100,updelay=100"
@@ -119,6 +115,12 @@
         nmcli con up bond-mgmt
       args:
         executable: /bin/bash
+      register: conn_mod
+
+
+    - name: Debug the Created connections
+      debug:
+        msg: "Connection Modify: {{ conn_mod.stdout_lines }}"
 
     - name: Restart NetworkManager service (second time)
       systemd:

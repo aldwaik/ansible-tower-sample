@@ -19,29 +19,30 @@
 
     - name: Create bond1 connection if not exists
       shell: |
-        nmcli connection add type bond ifname bond1 con-name bond1 mode active-backup
-        nmcli connection modify bond1 bond.options "miimon=100 updelay=100"
+        nmcli connection add type bond ifname bond1 con-name bond1 mode 802.3ad
+        nmcli connection modify bond1 bond.options "miimon=100,updelay=100,mode=802.3ad,xmit_hash_policy=layer3+4"
         nmcli connection modify bond1 ipv4.addresses 10.70.128.{{ mgmt_last_octet }}/24
         nmcli connection modify bond1 ipv4.method manual
       when: bond1_check.rc != 0
 
-    - name: Check if ens3f0np0-slave connection exists
-      shell: nmcli connection show ens3f0np0-slave
+    - name: Check if bond1-slave-ens3f0np0 connection exists
+      shell: nmcli connection show bond1-slave-ens3f0np0
       register: ens3f0np0_slave_check
       ignore_errors: yes
 
     - name: Add ens3f0np0 to bond1 if not exists
-      shell: nmcli connection add type ethernet ifname ens3f0np0 con-name ens3f0np0-slave master bond1
+      shell: nmcli connection add type ethernet ifname ens3f0np0 con-name bond1-slave-ens3f0np0 master bond1
       when: ens3f0np0_slave_check.rc != 0
 
-    - name: Check if ens6f0np0-slave connection exists
-      shell: nmcli connection show ens6f0np0-slave
-      register: ens6f0np0_slave_check
+    - name: Check if bond1-slave-ens3f1np1 connection exists
+      shell: nmcli connection show bond1-slave-ens3f1np1
+      register: ens3f1np1_slave_check
       ignore_errors: yes
 
-    - name: Add ens6f0np0 to bond1 if not exists
-      shell: nmcli connection add type ethernet ifname ens6f0np0 con-name ens6f0np0-slave master bond1
-      when: ens6f0np0_slave_check.rc != 0
+    - name: Add ens3f1np1 to bond1 if not exists
+      shell: nmcli connection add type ethernet ifname ens3f1np1 con-name bond1-slave-ens3f1np1 master bond1
+      when: ens3f1np1_slave_check.rc != 0
+
 
     - name: Check if bond2 connection exists
       shell: nmcli connection show bond2
@@ -56,22 +57,22 @@
         nmcli connection modify bond2 ipv4.method manual
       when: bond2_check.rc != 0
 
-    - name: Check if ens3f1np1-slave connection exists
-      shell: nmcli connection show ens3f1np1-slave
-      register: ens3f1np1_slave_check
+    - name: Check if bond2-slave-ens6f1np1 connection exists
+      shell: nmcli connection show bond2-slave-ens6f1np1
+      register: ens6f0np0_slave_check
       ignore_errors: yes
 
-    - name: Add ens3f1np1 to bond2 if not exists
-      shell: nmcli connection add type ethernet ifname ens3f1np1 con-name ens3f1np1-slave master bond2
-      when: ens3f1np1_slave_check.rc != 0
+    - name: Add ens6f0np0 to bond2 if not exists
+      shell: nmcli connection add type ethernet ifname ens6f0np0 con-name bond2-slave-ens6f0np0 master bond2
+      when: ens6f0np0_slave_check.rc != 0
 
-    - name: Check if ens6f1np1-slave connection exists
-      shell: nmcli connection show ens6f1np1-slave
+    - name: Check if bond2-slave-ens6f1np1 connection exists
+      shell: nmcli connection show bond2-slave-ens6f1np1
       register: ens6f1np1_slave_check
       ignore_errors: yes
 
     - name: Add ens6f1np1 to bond2 if not exists
-      shell: nmcli connection add type ethernet ifname ens6f1np1 con-name ens6f1np1-slave master bond2
+      shell: nmcli connection add type ethernet ifname ens6f1np1 con-name bond2-slave-ens6f1np1 master bond2
       when: ens6f1np1_slave_check.rc != 0
 
     - name: Bring up the bond1 connection

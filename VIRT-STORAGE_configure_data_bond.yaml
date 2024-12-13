@@ -16,7 +16,8 @@
     - name: Delete data connections
       shell: |
         nmcli connection show | grep bond | grep -v bond-MGMT | awk '{print $1}' | xargs -I {} nmcli connection delete {}
-
+        nmcli connection show | grep Wired | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+      ignore_errors: yes
 
     - name: Check if bond1 connection exists
       shell: nmcli connection show bond1

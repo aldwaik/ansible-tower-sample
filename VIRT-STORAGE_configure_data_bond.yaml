@@ -12,6 +12,12 @@
       set_fact:
         mgmt_last_octet: "{{ last_octet.stdout }}"
 
+
+    - name: Delete data connections
+      shell: |
+        nmcli connection show | grep bond | grep -v bond-MGMT | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+
+
     - name: Check if bond1 connection exists
       shell: nmcli connection show bond1
       register: bond1_check

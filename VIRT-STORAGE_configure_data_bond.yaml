@@ -21,7 +21,7 @@
 
     - name: Check if bond-BE connection exists
       shell: nmcli connection show bond-BE
-      register: bond-BE_check
+      register: bond_BE_check
       ignore_errors: yes
 
     - name: Create bond-BE connection if not exists
@@ -30,7 +30,7 @@
         nmcli connection modify bond-BE bond.options "miimon=100,updelay=100,mode=802.3ad,xmit_hash_policy=layer3+4"
         nmcli connection modify bond-BE ipv4.addresses 10.70.128.{{ mgmt_last_octet }}/24
         nmcli connection modify bond-BE ipv4.method manual
-      when: bond-BE_check.rc != 0
+      when: bond_BE_check.rc != 0
 
     - name: Check if bond-BE-slave-ens3f0np0 connection exists
       shell: nmcli connection show bond-BE-slave-ens3f0np0
@@ -53,7 +53,7 @@
 
     - name: Check if bond-FE connection exists
       shell: nmcli connection show bond-FE
-      register: bond-FE_check
+      register: bond_FE_check
       ignore_errors: yes
 
     - name: Create bond-FE connection if not exists
@@ -62,7 +62,7 @@
         nmcli connection modify bond-FE bond.options "miimon=100,updelay=100,mode=802.3ad,xmit_hash_policy=layer3+4"
         nmcli connection modify bond-FE ipv4.addresses 10.70.129.{{ mgmt_last_octet }}/24
         nmcli connection modify bond-FE ipv4.method manual
-      when: bond-FE_check.rc != 0
+      when: bond_FE_check.rc != 0
 
     - name: Check if bond-FE-slave-ens6f1np1 connection exists
       shell: nmcli connection show bond-FE-slave-ens6f1np1

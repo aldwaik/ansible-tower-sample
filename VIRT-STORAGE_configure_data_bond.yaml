@@ -58,7 +58,7 @@
 
     - name: Create bond-FE connection if not exists
       shell: |
-        nmcli connection add type bond ifname bond-FE con-name bond-FE mode mode 802.3ad
+        nmcli connection add type bond ifname bond-FE con-name bond-FE mode 802.3ad
         nmcli connection modify bond-FE bond.options "miimon=100,updelay=100,mode=802.3ad,xmit_hash_policy=layer3+4"
         nmcli connection modify bond-FE ipv4.addresses 10.70.129.{{ mgmt_last_octet }}/24
         nmcli connection modify bond-FE ipv4.method manual

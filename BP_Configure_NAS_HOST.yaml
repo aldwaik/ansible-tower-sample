@@ -8,12 +8,6 @@
     subnet: "10.70.130.0/24"
     bond_name: bondNAS
   tasks:
-    - name: Check if {{ bond_name }} exists
-      shell: |
-        nmcli dev status | grep {{ bond_name }}
-      register: bond_check
-      ignore_errors: yes
-
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
@@ -49,7 +43,6 @@
         nmcli con add type bond connection.id {{ bond_name }} ifname {{ bond_name }} mode active-backup
         nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-1 ifname {{ interface_1 }} master {{ bond_name }}
         nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-2 ifname {{ interface_2 }} master {{ bond_name }}
-      when: bond_check.rc != 0 and bond_check.stdout == ""
       args:
         executable: /bin/bash
 

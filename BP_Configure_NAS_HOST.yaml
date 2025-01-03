@@ -1,0 +1,70 @@
+---
+- name: Configure BP NAS Bond
+  hosts: all
+  become: yes
+  vars:
+    interface_1: "ens5f0np0"
+    interface_2: "ens7f0np0"
+    subnet: "10.70.130.0/24"
+    bond_name: bondNAS
+  tasks:
+    - name: Check if {{ bond_name }} exists
+      shell: |
+        nmcli dev status | grep {{ bond_name }}
+      register: bond_check
+      ignore_errors: yes
+
+    - name: Get the IP, Gateway, DNS, Domain, and Searches
+      shell: |
+        ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
+        echo -e "IP_ADDR=$ip_addr"
+      register: network_info
+
+    - name: Debug network info output
+      debug:
+        var: network_info.stdout_lines
+
+    - name: Set variables from the network info
+      set_fact:
+        ip_addr: "{{ network_info.stdout_lines[0].split('=')[1] | default('') }}"
+
+    - name: Fail if any network variable is empty
+      fail:
+        msg: "One or more network variables are empty. Please check the network configuration."
+      when: ip_addr == ''
+
+    - name: Extract First three octets from the subnet and last octet of management interface IP
+      set_fact:
+        subnet_first_3_octet: "{{ subnet | regex_replace('.0/.*', '') }}"
+        last_octet: "{{ ip_addr | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
+
+    - name: Delete old bonds
+      shell: |
+        nmcli connection show | grep -e bondSto -e {{ bond_name }} | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+#        nmcli connection show | grep Wired | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+      ignore_errors: yes
+
+    - name: Create bond {{ bond_name }}
+      shell: |
+        nmcli con add type bond connection.id {{ bond_name }} ifname {{ bond_name }} mode active-backup
+        nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-1 ifname {{ interface_1 }} master {{ bond_name }}
+        nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-2 ifname {{ interface_2 }} master {{ bond_name }}
+      when: bond_check.rc != 0 and bond_check.stdout == ""
+      args:
+        executable: /bin/bash
+
+    - name: Configure bond {{ bond_name }}
+      shell: |
+        nmcli con mod {{ bond_name }} bond.options "primary={{ interface_1 }},mode=active-backup,miimon=100,updelay=100"
+        nmcli con mod {{ bond_name }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 
+        nmcli con mod {{ bond_name }} ipv4.method manual
+        nmcli con mod {{ bond_name }} connection.autoconnect yes
+        nmcli con mod {{ bond_name }} ipv6.method disabled
+        nmcli con up {{ bond_name }}
+      args:
+        executable: /bin/bash
+
+    - name: Restart NetworkManager service
+      systemd:
+        name: NetworkManager
+        state: restarted

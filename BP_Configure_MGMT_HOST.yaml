@@ -90,10 +90,6 @@
       register: bond_mgmt_check
       failed_when: bond_mgmt_check.rc != 0 and bond_mgmt_check.stdout != ""
 
-    - name: Delete old bonds
-      shell: |
-      ignore_errors: yes
-
     - name: Create and configure bond-mgmt if not exists
       shell: |
         nmcli connection show | grep -e bondMGMT | awk '{print $1}' | xargs -I {} nmcli connection delete {}

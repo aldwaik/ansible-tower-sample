@@ -92,7 +92,7 @@
 
     - name: Create and configure bond-mgmt if not exists
       shell: |
-        nmcli connection show | grep -e bondMGMT | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+        nmcli connection show | grep -e bondMGT | awk '{print $1}' | xargs -I {} nmcli connection delete {}
 
         if nmcli con show eno8303 > /dev/null 2>&1; then
           nmcli con del "eno8303"

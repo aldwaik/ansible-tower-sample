@@ -60,6 +60,7 @@
         nmcli con mod {{ bond_name }} ipv4.method manual
         nmcli con mod {{ bond_name }} connection.autoconnect yes
         nmcli con mod {{ bond_name }} ipv6.method disabled
+        nmcli con mod {{ bond_name }} ipv4.routes "10.70.129.0/24 10.70.130.254" 
         nmcli con up {{ bond_name }}
       args:
         executable: /bin/bash

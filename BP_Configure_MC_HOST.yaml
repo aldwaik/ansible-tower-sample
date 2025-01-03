@@ -3,6 +3,10 @@
   hosts: all
   become: yes
   vars:
+    interface_1: "eno12399np0"
+    interface_2: "ens3f0np0"
+    subnet: "10.70.9.0/24"
+    bond_name: bondMcast
     interface_P: "eno12399np0"
     interface_S: "ens3f0np0"
     subnet_P: "10.70.9.0/24"
@@ -28,18 +32,6 @@
         nmcli connection delete Connection-MC-S
       ignore_errors: yes
 
-    - name: Check if {{ conn_P }} exists
-      shell: |
-        nmcli dev status | grep {{ conn_P }}
-      register: conn_P_check
-      ignore_errors: yes
-
-    - name: Check if {{ conn_S }} exists
-      shell: |
-        nmcli dev status | grep {{ conn_S }}
-      register: conn_S_check
-      ignore_errors: yes
-
     - name: Get the IP, Gateway, DNS, Domain, and Searches
       shell: |
         ip_addr=$(nmcli -t -f IP4.ADDRESS dev show | grep 10.17 | cut -d: -f2)
@@ -61,60 +53,63 @@
 
     - name: Extract First three octets from the subnet and last octet of management interface IP
       set_fact:
-        subnet_first_3_octet_P: "{{ subnet_P | regex_replace('.0/.*', '') }}"
-        subnet_first_3_octet_S: "{{ subnet_S | regex_replace('.0/.*', '') }}"
+        # subnet_first_3_octet_P: "{{ subnet_P | regex_replace('.0/.*', '') }}"
+        # subnet_first_3_octet_S: "{{ subnet_S | regex_replace('.0/.*', '') }}"
         last_octet: "{{ ip_addr | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
 
-    # - name: Stop execution
-    #   meta: end_play
+    # - name: Create Connection {{ conn_P }} if not exists
+    #   shell: |
+    #     nmcli con add type ethernet connection.id {{ conn_P }} ifname {{ interface_P }}
+    #   args:
+    #     executable: /bin/bash
 
-    - name: Create Connection {{ conn_P }} if not exists
+    # - name: Create Connection {{ conn_S }} if not exists
+    #   shell: |
+    #     nmcli con add type ethernet connection.id {{ conn_S }} ifname {{ interface_S }}
+    #   args:
+    #     executable: /bin/bash
+
+    - name: Create bond {{ bond_name }}
       shell: |
-        nmcli con add type ethernet connection.id {{ conn_P }} ifname {{ interface_P }}
-      when: conn_P_check.rc != 0 and conn_P_check.stdout == ""
+        nmcli con add type bond connection.id {{ bond_name }} ifname {{ bond_name }} mode active-backup
+        nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-1 ifname {{ interface_1 }} master {{ bond_name }}
+        nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-2 ifname {{ interface_2 }} master {{ bond_name }}
+      when: bond_check.rc != 0 and bond_check.stdout == ""
       args:
         executable: /bin/bash
 
-    - name: Create Connection {{ conn_S }} if not exists
+    - name: Configure bond {{ bond_name }}
       shell: |
-        nmcli con add type ethernet connection.id {{ conn_S }} ifname {{ interface_S }}
-      when: conn_S_check.rc != 0 and conn_S_check.stdout == ""
+        nmcli con mod {{ bond_name }} bond.options "primary={{ interface_1 }},mode=active-backup,miimon=100,updelay=100"
+        nmcli con mod {{ bond_name }} ipv4.addresses {{ subnet_first_3_octet }}.{{ last_octet }}/24 
+        nmcli con mod {{ bond_name }} ipv4.method manual
+        nmcli con mod {{ bond_name }} connection.autoconnect yes
+        nmcli con mod {{ bond_name }} ipv6.method disabled
+        nmcli con mod {{ bond_name }} ipv4.routes "10.70.51.0/24 10.70.9.254"
+        nmcli con mod {{ bond_name }} +ipv4.routes "10.80.51.0/24 10.70.9.254" 
+        nmcli con up {{ bond_name }}
       args:
         executable: /bin/bash
 
-    - name: Modify Connection {{ conn_P }} interface, if exists
-      shell: |
-        nmcli con mod {{ conn_P }} ifname {{ interface_P }}
-      when: conn_P_check.rc == 0 or conn_P_check.stdout != ""
-      args:
-        executable: /bin/bash
+    # - name: Configure Connection {{ conn_P }}
+    #   shell: |
+    #     nmcli con mod {{ conn_P }} ipv4.addresses {{ subnet_first_3_octet_P }}.{{ last_octet }}/24 
+    #     nmcli con mod {{ conn_P }} ipv4.method manual
+    #     nmcli con mod {{ conn_P }} connection.autoconnect yes
+    #     nmcli con mod {{ conn_P }} ipv6.method disabled
+    #     nmcli con up {{ conn_P }}
+    #   args:
+    #     executable: /bin/bash
 
-    - name: Modify Connection {{ conn_S }} interface, if exists
-      shell: |
-        nmcli con mod {{ conn_S }} ifname {{ interface_S }}
-      when: conn_S_check.rc == 0 or conn_S_check.stdout != ""
-      args:
-        executable: /bin/bash
-
-    - name: Configure Connection {{ conn_P }}
-      shell: |
-        nmcli con mod {{ conn_P }} ipv4.addresses {{ subnet_first_3_octet_P }}.{{ last_octet }}/24 
-        nmcli con mod {{ conn_P }} ipv4.method manual
-        nmcli con mod {{ conn_P }} connection.autoconnect yes
-        nmcli con mod {{ conn_P }} ipv6.method disabled
-        nmcli con up {{ conn_P }}
-      args:
-        executable: /bin/bash
-
-    - name: Configure Connection {{ conn_S }}
-      shell: |
-        nmcli con mod {{ conn_S }} ipv4.addresses {{ subnet_first_3_octet_S }}.{{ last_octet }}/24 
-        nmcli con mod {{ conn_S }} ipv4.method manual
-        nmcli con mod {{ conn_S }} connection.autoconnect yes
-        nmcli con mod {{ conn_S }} ipv6.method disabled
-        nmcli con up {{ conn_S }}
-      args:
-        executable: /bin/bash
+    # - name: Configure Connection {{ conn_S }}
+    #   shell: |
+    #     nmcli con mod {{ conn_S }} ipv4.addresses {{ subnet_first_3_octet_S }}.{{ last_octet }}/24 
+    #     nmcli con mod {{ conn_S }} ipv4.method manual
+    #     nmcli con mod {{ conn_S }} connection.autoconnect yes
+    #     nmcli con mod {{ conn_S }} ipv6.method disabled
+    #     nmcli con up {{ conn_S }}
+    #   args:
+    #     executable: /bin/bash
 
     - name: Restart NetworkManager service
       systemd:

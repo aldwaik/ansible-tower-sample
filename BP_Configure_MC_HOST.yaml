@@ -55,6 +55,7 @@
       set_fact:
         # subnet_first_3_octet_P: "{{ subnet_P | regex_replace('.0/.*', '') }}"
         # subnet_first_3_octet_S: "{{ subnet_S | regex_replace('.0/.*', '') }}"
+        subnet_first_3_octet: "{{ subnet | regex_replace('.0/.*', '') }}"
         last_octet: "{{ ip_addr | regex_replace('.*\\.', '') | regex_replace('/.*', '') }}"
 
     # - name: Create Connection {{ conn_P }} if not exists

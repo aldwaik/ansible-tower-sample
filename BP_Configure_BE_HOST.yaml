@@ -53,7 +53,6 @@
         nmcli con add type bond connection.id {{ bond_name }} ifname {{ bond_name }} mode active-backup
         nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-1 ifname {{ interface_1 }} master {{ bond_name }}
         nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-2 ifname {{ interface_2 }} master {{ bond_name }}
-      when: bond_check.rc != 0 and bond_check.stdout == ""
       args:
         executable: /bin/bash
 

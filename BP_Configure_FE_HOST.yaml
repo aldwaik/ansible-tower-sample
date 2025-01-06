@@ -3,10 +3,11 @@
   hosts: all
   become: yes
   vars:
+    bond_name: bond-fe
     interface_1: "eno12399np0"
     interface_2: "ens3f0np0"
     subnet: "10.70.78.0/24"
-    bond_name: bond-fe
+    gw: "10.70.78.254"
   tasks:
     - name: Check if bond-fe exists
       shell: |
@@ -63,6 +64,7 @@
         nmcli con mod {{ bond_name }} ipv4.method manual
         nmcli con mod {{ bond_name }} connection.autoconnect yes
         nmcli con mod {{ bond_name }} ipv6.method disabled
+        nmcli con mod {{ bond_name }} ipv4.gateway "{{ gw }}"
         nmcli con up {{ bond_name }}
       args:
         executable: /bin/bash

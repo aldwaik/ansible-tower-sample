@@ -41,20 +41,19 @@
     # - name: Stop execution
     #   meta: end_play
 
+    - name: Delete old bonds
+      shell: |
+        nmcli connection show | grep -e {{ bond_name }} | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+        nmcli connection show | grep -e {{ interface_1 }} | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+        nmcli connection show | grep -e {{ interface_2 }} | awk '{print $1}' | xargs -I {} nmcli connection delete {}
+      ignore_errors: yes
+
     - name: Create bond {{ bond_name }} if not exists
       shell: |
         nmcli con add type bond connection.id {{ bond_name }} ifname {{ bond_name }} mode active-backup
         nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-1 ifname {{ interface_1 }} master {{ bond_name }}
         nmcli con add type ethernet slave-type bond connection.id {{ bond_name }}-interface-2 ifname {{ interface_2 }} master {{ bond_name }}
       when: bond_check.rc != 0 and bond_check.stdout == ""
-      args:
-        executable: /bin/bash
-
-    - name: Modify bond {{ bond_name }} slave interfaces, if exists
-      shell: |
-        nmcli con mod {{ bond_name }}-interface-1 ifname {{ interface_1 }} master {{ bond_name }}
-        nmcli con mod {{ bond_name }}-interface-2 ifname {{ interface_2 }} master {{ bond_name }}
-      when: bond_check.rc == 0 or bond_check.stdout != ""
       args:
         executable: /bin/bash
 
